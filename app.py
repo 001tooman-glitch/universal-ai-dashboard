@@ -110,4 +110,4 @@ tables = {}
 
 if uploaded_files:
 
-    for file in
+    for file in uploaded_files:
