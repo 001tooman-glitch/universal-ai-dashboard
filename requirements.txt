@@ -6,3 +6,4 @@ duckdb
 openpyxl
 pyarrow
 xlsxwriter
+networkx
