@@ -21,9 +21,9 @@ def detect_domain(df):
         return "Бюджетирование"
 
     if any(x in cols for x in [
-        "выручка",
         "клиент",
         "товар",
+        "выручка",
         "продажи"
     ]):
         return "Продажи"
