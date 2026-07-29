@@ -7,6 +7,8 @@ from utils.domain_detector import detect_domain
 from utils.recommendations import get_recommendations
 from utils.charts import build_chart
 from utils.relationships import detect_relationships
+from utils.scenario_detector import detect_scenario
+from utils.time_series import combine_tables
 
 st.set_page_config(
     page_title="Universal AI Dashboard",
@@ -15,6 +17,7 @@ st.set_page_config(
 )
 
 st.title("📊 Universal AI Dashboard")
+st.write("Универсальная платформа анализа данных")
 
 uploaded_files = st.file_uploader(
     "Загрузите один или несколько файлов",
@@ -25,6 +28,10 @@ uploaded_files = st.file_uploader(
 tables = {}
 
 if uploaded_files:
+
+    # ===================================
+    # Загрузка файлов
+    # ===================================
 
     for file in uploaded_files:
 
@@ -54,34 +61,78 @@ if uploaded_files:
         f"Загружено файлов: {len(tables)}"
     )
 
-    # ====================================
-    # СПИСОК ТАБЛИЦ
-    # ====================================
+    # ===================================
+    # Определение сценария
+    # ===================================
 
-    st.subheader("📂 Загруженные таблицы")
+    scenario = detect_scenario(tables)
 
-    info = []
+    st.subheader("🧠 Определение сценария")
 
-    for name, df in tables.items():
+    if scenario == "time_series":
 
-        info.append({
-            "Таблица": name,
-            "Строк": len(df),
-            "Столбцов": len(df.columns)
-        })
+        st.success(
+            "Обнаружены файлы одинаковой структуры. Включен режим анализа периодов."
+        )
 
-    st.dataframe(
-        pd.DataFrame(info),
-        use_container_width=True
-    )
+        merged_df = combine_tables(tables)
 
-    # ====================================
-    # ПОИСК СВЯЗЕЙ
-    # ====================================
+        col1, col2 = st.columns(2)
 
-    if len(tables) > 1:
+        with col1:
+            st.metric(
+                "Всего записей",
+                f"{len(merged_df):,}"
+            )
 
-        st.subheader("🔗 Найденные связи")
+        with col2:
+            st.metric(
+                "Периодов",
+                merged_df["Период"].nunique()
+            )
+
+        st.subheader("📅 Загруженные периоды")
+
+        periods = (
+            merged_df["Период"]
+            .value_counts()
+            .reset_index()
+        )
+
+        periods.columns = [
+            "Период",
+            "Записей"
+        ]
+
+        st.dataframe(
+            periods,
+            use_container_width=True
+        )
+
+        df = merged_df
+
+    elif scenario == "relational":
+
+        st.success(
+            "Обнаружены файлы разной структуры. Включен режим поиска связей."
+        )
+
+        st.subheader("📂 Загруженные таблицы")
+
+        info = []
+
+        for name, table in tables.items():
+
+            info.append({
+                "Таблица": name,
+                "Строк": len(table),
+                "Столбцов": len(table.columns)
+            })
+
+        st.dataframe(
+            pd.DataFrame(info),
+            use_container_width=True
+        )
 
         relations = detect_relationships(
             tables
@@ -89,44 +140,59 @@ if uploaded_files:
 
         if len(relations):
 
+            st.subheader("🔗 Найденные связи")
+
             st.dataframe(
                 relations,
                 use_container_width=True
             )
 
-        else:
+        selected_table = st.selectbox(
+            "Выберите таблицу",
+            list(tables.keys())
+        )
 
-            st.info(
-                "Связи автоматически не обнаружены"
-            )
+        df = tables[selected_table]
 
-    # ====================================
-    # ВЫБОР ТАБЛИЦЫ
-    # ====================================
+    else:
 
-    selected_table = st.selectbox(
-        "Выберите таблицу",
-        list(tables.keys())
-    )
+        st.info(
+            "Загружен один файл."
+        )
 
-    df = tables[selected_table]
+        df = list(tables.values())[0]
 
-    # ====================================
+    # ===================================
     # KPI
-    # ====================================
+    # ===================================
 
     st.subheader("📈 KPI")
 
     c1, c2, c3, c4 = st.columns(4)
 
-    c1.metric("Строк", len(df))
-    c2.metric("Столбцов", len(df.columns))
-    c3.metric("Пропусков", int(df.isna().sum().sum()))
-    c4.metric("Дубликатов", int(df.duplicated().sum()))
+    c1.metric(
+        "Строк",
+        len(df)
+    )
 
-    # ====================================
-    # ОБЛАСТЬ
-    # ====================================
+    c2.metric(
+        "Столбцов",
+        len(df.columns)
+    )
+
+    c3.metric(
+        "Пропусков",
+        int(df.isna().sum().sum())
+    )
+
+    c4.metric(
+        "Дубликатов",
+        int(df.duplicated().sum())
+    )
+
+    # ===================================
+    # Область данных
+    # ===================================
 
     domain = detect_domain(df)
 
@@ -134,30 +200,26 @@ if uploaded_files:
 
     st.success(domain)
 
-    # ====================================
-    # РЕКОМЕНДАЦИИ
-    # ====================================
+    st.subheader("💡 Рекомендуемые анализы")
 
-    st.subheader("💡 Рекомендованные анализы")
+    for item in get_recommendations(domain):
 
-    for rec in get_recommendations(domain):
+        st.write(f"✅ {item}")
 
-        st.write(f"✅ {rec}")
+    # ===================================
+    # Данные
+    # ===================================
 
-    # ====================================
-    # ДАННЫЕ
-    # ====================================
-
-    st.subheader("📄 Предпросмотр")
+    st.subheader("📄 Предпросмотр данных")
 
     st.dataframe(
         df.head(100),
         use_container_width=True
     )
 
-    # ====================================
-    # СТРУКТУРА
-    # ====================================
+    # ===================================
+    # Структура
+    # ===================================
 
     st.subheader("🧩 Структура данных")
 
@@ -166,49 +228,4 @@ if uploaded_files:
         use_container_width=True
     )
 
-    # ====================================
-    # ГРАФИКИ
-    # ====================================
-
-    numeric_cols = list(
-        df.select_dtypes(
-            include=np.number
-        ).columns
-    )
-
-    category_cols = list(
-        df.select_dtypes(
-            include=["object"]
-        ).columns
-    )
-
-    if numeric_cols and category_cols:
-
-        st.subheader("📊 Визуализация")
-
-        metric = st.selectbox(
-            "Показатель",
-            numeric_cols
-        )
-
-        dimension = st.selectbox(
-            "Измерение",
-            category_cols
-        )
-
-        fig = build_chart(
-            df,
-            metric,
-            dimension
-        )
-
-        st.plotly_chart(
-            fig,
-            use_container_width=True
-        )
-
-else:
-
-    st.info(
-        "Загрузите один или несколько файлов."
-    )
+ 
