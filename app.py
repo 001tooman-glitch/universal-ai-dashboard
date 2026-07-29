@@ -6,6 +6,7 @@ from utils.profiler import build_profile
 from utils.domain_detector import detect_domain
 from utils.recommendations import get_recommendations
 from utils.charts import build_chart
+from utils.relationships import detect_relationships
 
 st.set_page_config(
     page_title="Universal AI Dashboard",
@@ -14,42 +15,160 @@ st.set_page_config(
 )
 
 st.title("📊 Universal AI Dashboard")
-st.write("Универсальная платформа анализа данных")
 
-uploaded_file = st.file_uploader(
-    "Загрузите Excel или CSV файл",
-    type=["xlsx", "csv"]
+uploaded_files = st.file_uploader(
+    "Загрузите один или несколько файлов",
+    type=["xlsx", "csv"],
+    accept_multiple_files=True
 )
 
-if uploaded_file:
+tables = {}
 
-    if uploaded_file.name.endswith(".csv"):
-        df = pd.read_csv(uploaded_file)
-    else:
-        df = pd.read_excel(uploaded_file)
+if uploaded_files:
 
-    col1, col2, col3, col4 = st.columns(4)
+    for file in uploaded_files:
 
-    col1.metric("Строк", len(df))
-    col2.metric("Столбцов", len(df.columns))
-    col3.metric("Пропусков", int(df.isna().sum().sum()))
-    col4.metric("Дубликатов", int(df.duplicated().sum()))
+        try:
+
+            if file.name.endswith(".csv"):
+                df = pd.read_csv(file)
+
+            else:
+                df = pd.read_excel(file)
+
+            table_name = (
+                file.name
+                .replace(".xlsx", "")
+                .replace(".csv", "")
+            )
+
+            tables[table_name] = df
+
+        except Exception as e:
+
+            st.error(
+                f"Ошибка загрузки {file.name}: {e}"
+            )
+
+    st.success(
+        f"Загружено файлов: {len(tables)}"
+    )
+
+    # ====================================
+    # СПИСОК ТАБЛИЦ
+    # ====================================
+
+    st.subheader("📂 Загруженные таблицы")
+
+    info = []
+
+    for name, df in tables.items():
+
+        info.append({
+            "Таблица": name,
+            "Строк": len(df),
+            "Столбцов": len(df.columns)
+        })
+
+    st.dataframe(
+        pd.DataFrame(info),
+        use_container_width=True
+    )
+
+    # ====================================
+    # ПОИСК СВЯЗЕЙ
+    # ====================================
+
+    if len(tables) > 1:
+
+        st.subheader("🔗 Найденные связи")
+
+        relations = detect_relationships(
+            tables
+        )
+
+        if len(relations):
+
+            st.dataframe(
+                relations,
+                use_container_width=True
+            )
+
+        else:
+
+            st.info(
+                "Связи автоматически не обнаружены"
+            )
+
+    # ====================================
+    # ВЫБОР ТАБЛИЦЫ
+    # ====================================
+
+    selected_table = st.selectbox(
+        "Выберите таблицу",
+        list(tables.keys())
+    )
+
+    df = tables[selected_table]
+
+    # ====================================
+    # KPI
+    # ====================================
+
+    st.subheader("📈 KPI")
+
+    c1, c2, c3, c4 = st.columns(4)
+
+    c1.metric("Строк", len(df))
+    c2.metric("Столбцов", len(df.columns))
+    c3.metric("Пропусков", int(df.isna().sum().sum()))
+    c4.metric("Дубликатов", int(df.duplicated().sum()))
+
+    # ====================================
+    # ОБЛАСТЬ
+    # ====================================
 
     domain = detect_domain(df)
 
     st.subheader("🤖 Предметная область")
+
     st.success(domain)
+
+    # ====================================
+    # РЕКОМЕНДАЦИИ
+    # ====================================
 
     st.subheader("💡 Рекомендованные анализы")
 
     for rec in get_recommendations(domain):
+
         st.write(f"✅ {rec}")
 
-    st.subheader("📄 Предпросмотр данных")
-    st.dataframe(df.head(100))
+    # ====================================
+    # ДАННЫЕ
+    # ====================================
+
+    st.subheader("📄 Предпросмотр")
+
+    st.dataframe(
+        df.head(100),
+        use_container_width=True
+    )
+
+    # ====================================
+    # СТРУКТУРА
+    # ====================================
 
     st.subheader("🧩 Структура данных")
-    st.dataframe(build_profile(df))
+
+    st.dataframe(
+        build_profile(df),
+        use_container_width=True
+    )
+
+    # ====================================
+    # ГРАФИКИ
+    # ====================================
 
     numeric_cols = list(
         df.select_dtypes(
@@ -59,7 +178,7 @@ if uploaded_file:
 
     category_cols = list(
         df.select_dtypes(
-            include="object"
+            include=["object"]
         ).columns
     )
 
@@ -91,5 +210,5 @@ if uploaded_file:
 else:
 
     st.info(
-        "Загрузите Excel или CSV файл."
+        "Загрузите один или несколько файлов."
     )
