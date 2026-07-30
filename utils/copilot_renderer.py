@@ -11,64 +11,49 @@ from utils.kpi_dashboard import (
     build_dashboard_kpis
 )
 
+from utils.dashboard_kpi_renderer import (
+    render_priority_kpis
+)
+
 
 def render_copilot_dashboard(
     dashboard
 ):
 
-    # ====================================
-    # KPI
-    # ====================================
+    source_df = dashboard.get(
+        "source_df"
+    )
 
     semantic_model = dashboard.get(
         "semantic_model",
         {}
     )
 
-    source_df = dashboard.get(
-        "source_df"
-    )
+    # ====================================
+    # KPI
+    # ====================================
 
     if (
         source_df is not None
         and semantic_model
     ):
 
-        kpis = build_dashboard_kpis(
-            source_df,
-            semantic_model
-        )
+        try:
 
-        if kpis:
-
-            st.subheader(
-                "📊 Ключевые показатели"
+            kpis = build_dashboard_kpis(
+                source_df,
+                semantic_model
             )
 
-            cols = st.columns(
-                len(kpis)
+            render_priority_kpis(
+                kpis
             )
 
-            for i, (
-                name,
-                value
-            ) in enumerate(
-                kpis.items()
-            ):
+        except Exception as e:
 
-                try:
-
-                    cols[i].metric(
-                        name,
-                        f"{value:,.0f}"
-                    )
-
-                except Exception:
-
-                    cols[i].metric(
-                        name,
-                        str(value)
-                    )
+            st.warning(
+                f"Ошибка KPI: {e}"
+            )
 
     # ====================================
     # ПАСПОРТ
@@ -79,123 +64,66 @@ def render_copilot_dashboard(
         {}
     )
 
-    st.subheader(
+    with st.expander(
         "🧠 AI Паспорт данных"
-    )
-
-    c1, c2, c3, c4 = st.columns(4)
-
-    c1.metric(
-        "Домен",
-        passport.get(
-            "domain",
-            "-"
-        )
-    )
-
-    c2.metric(
-        "Уверенность",
-        f"{round(passport.get('confidence', 0) * 100, 1)}%"
-    )
-
-    c3.metric(
-        "Измерений",
-        passport.get(
-            "dimensions",
-            0
-        )
-    )
-
-    c4.metric(
-        "Показателей",
-        passport.get(
-            "measures",
-            0
-        )
-    )
-
-    # ====================================
-    # ДОМЕН
-    # ====================================
-
-    st.subheader(
-        "🎯 Определение домена"
-    )
-
-    for explanation in dashboard.get(
-        "domain_explanations",
-        []
     ):
 
-        st.info(
-            explanation
+        c1, c2, c3, c4 = st.columns(4)
+
+        c1.metric(
+            "Домен",
+            passport.get(
+                "domain",
+                "-"
+            )
+        )
+
+        c2.metric(
+            "Уверенность",
+            f"{round(passport.get('confidence', 0) * 100, 1)}%"
+        )
+
+        c3.metric(
+            "Измерений",
+            passport.get(
+                "dimensions",
+                0
+            )
+        )
+
+        c4.metric(
+            "Показателей",
+            passport.get(
+                "measures",
+                0
+            )
         )
 
     # ====================================
     # ИНСАЙТЫ
     # ====================================
 
-    st.subheader(
-        "💡 Инсайты модели данных"
-    )
-
-    for insight in dashboard.get(
-        "model_insights",
-        []
-    ):
-
-        st.success(
-            insight
-        )
-
-    # ====================================
-    # ДОСТУПНЫЕ АНАЛИЗЫ
-    # ====================================
-
-    st.subheader(
-        "📚 Доступные анализы"
-    )
-
-    analyses = dashboard.get(
-        "available_analyses",
+    recommendations = dashboard.get(
+        "recommendations",
         []
     )
 
-    if analyses:
+    if recommendations:
 
-        st.dataframe(
-            pd.DataFrame(
-                analyses
-            ),
-            use_container_width=True
+        st.subheader(
+            "🤖 Выводы Copilot"
         )
 
+        for item in recommendations[:10]:
+
+            st.success(item)
+
     # ====================================
-    # ПЛАН АНАЛИЗА
+    # АНАЛИЗЫ
     # ====================================
 
     st.subheader(
-        "📋 План анализа"
-    )
-
-    plan = dashboard.get(
-        "analysis_plan",
-        []
-    )
-
-    if plan:
-
-        st.dataframe(
-            pd.DataFrame(plan),
-            use_container_width=True
-        )
-
-    # ====================================
-    # РЕЗУЛЬТАТЫ АНАЛИЗОВ
-    # ====================================
-
-    st.subheader(
-        "📈 Результаты анализов"
+        "📊 Визуальная аналитика"
     )
 
     results = dashboard.get(
@@ -206,247 +134,30 @@ def render_copilot_dashboard(
     if not results:
 
         st.info(
-            "Результаты отсутствуют."
+            "Нет результатов анализа."
         )
 
-    for result in results:
+    else:
 
-        analysis_id = result.get(
-            "analysis_id",
-            "unknown"
-        )
+        for result in results:
 
-        success = result.get(
-            "success",
-            False
-        )
+            analysis_id = result.get(
+                "analysis_id",
+                "unknown"
+            )
 
-        data = result.get(
-            "data"
-        )
+            success = result.get(
+                "success",
+                False
+            )
 
-        with st.expander(
-            f"📊 {analysis_id}",
-            expanded=True
-        ):
+            data = result.get(
+                "data"
+            )
 
             if not success:
 
-                st.warning(
-                    result.get(
-                        "message",
-                        "Ошибка выполнения"
-                    )
-                )
-
                 continue
 
             # ==========================
-            # ABC
-            # ==========================
-
-            if (
-                analysis_id
-                == "abc_analysis"
-                and isinstance(
-                    data,
-                    pd.DataFrame
-                )
-            ):
-
-                try:
-
-                    fig = build_abc_chart(
-                        data
-                    )
-
-                    st.plotly_chart(
-                        fig,
-                        use_container_width=True
-                    )
-
-                except Exception as e:
-
-                    st.warning(
-                        f"Ошибка ABC графика: {e}"
-                    )
-
-                st.dataframe(
-                    data.head(100),
-                    use_container_width=True
-                )
-
-                continue
-
-            # ==========================
-            # XYZ
-            # ==========================
-
-            if (
-                analysis_id
-                == "xyz_analysis"
-                and isinstance(
-                    data,
-                    pd.DataFrame
-                )
-            ):
-
-                try:
-
-                    fig = build_xyz_chart(
-                        data
-                    )
-
-                    st.plotly_chart(
-                        fig,
-                        use_container_width=True
-                    )
-
-                except Exception as e:
-
-                    st.warning(
-                        f"Ошибка XYZ графика: {e}"
-                    )
-
-                st.dataframe(
-                    data.head(100),
-                    use_container_width=True
-                )
-
-                continue
-
-            # ==========================
-            # ABC XYZ
-            # ==========================
-
-            if (
-                analysis_id
-                == "abc_xyz_matrix"
-                and isinstance(
-                    data,
-                    dict
-                )
-            ):
-
-                matrix = data.get(
-                    "matrix"
-                )
-
-                summary = data.get(
-                    "summary"
-                )
-
-                if matrix is not None:
-
-                    try:
-
-                        fig = (
-                            build_abc_xyz_heatmap(
-                                matrix
-                            )
-                        )
-
-                        st.plotly_chart(
-                            fig,
-                            use_container_width=True
-                        )
-
-                    except Exception as e:
-
-                        st.warning(
-                            f"Ошибка Heatmap: {e}"
-                        )
-
-                if summary is not None:
-
-                    st.markdown(
-                        "### Сводка ABC/XYZ"
-                    )
-
-                    st.dataframe(
-                        summary,
-                        use_container_width=True
-                    )
-
-                if matrix is not None:
-
-                    st.markdown(
-                        "### Матрица ABC/XYZ"
-                    )
-
-                    st.dataframe(
-                        matrix.head(100),
-                        use_container_width=True
-                    )
-
-                continue
-
-            # ==========================
-            # DataFrame
-            # ==========================
-
-            if isinstance(
-                data,
-                pd.DataFrame
-            ):
-
-                st.dataframe(
-                    data.head(100),
-                    use_container_width=True
-                )
-
-            # ==========================
-            # Dict
-            # ==========================
-
-            elif isinstance(
-                data,
-                dict
-            ):
-
-                for key, value in data.items():
-
-                    st.markdown(
-                        f"**{key}**"
-                    )
-
-                    if isinstance(
-                        value,
-                        pd.DataFrame
-                    ):
-
-                        st.dataframe(
-                            value.head(100),
-                            use_container_width=True
-                        )
-
-                    else:
-
-                        st.write(
-                            value
-                        )
-
-            else:
-
-                st.write(
-                    data
-                )
-
-    # ====================================
-    # COPILOT
-    # ====================================
-
-    st.subheader(
-        "🤖 Рекомендации Copilot"
-    )
-
-    recommendations = dashboard.get(
-        "recommendations",
-        []
-    )
-
-    for recommendation in recommendations:
-
-        st.info(
-            recommendation
-        )
+            # 
