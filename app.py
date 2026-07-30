@@ -43,7 +43,6 @@ def load_dataframe(
     if file_name.lower().endswith(
         ".csv"
     ):
-
         return pd.read_csv(data)
 
     return pd.read_excel(data)
@@ -53,10 +52,7 @@ def load_dataframe(
 def cached_semantics(
     df
 ):
-
-    return analyze_semantics(
-        df
-    )
+    return analyze_semantics(df)
 
 
 @st.cache_data(show_spinner=False)
@@ -65,7 +61,6 @@ def cached_dashboard(
     semantics,
     scenario
 ):
-
     return build_copilot_dashboard(
         df=df,
         semantics=semantics,
@@ -77,7 +72,6 @@ def cached_dashboard(
 def cached_combine_tables(
     tables
 ):
-
     return combine_tables(
         tables
     )
@@ -97,21 +91,18 @@ st.title(
     "📊 Universal AI Dashboard"
 )
 
-st.write(
+st.caption(
     "Универсальная AI-платформа анализа данных"
 )
 
 uploaded_files = st.file_uploader(
     "Загрузите Excel или CSV файлы",
-    type=[
-        "xlsx",
-        "csv"
-    ],
+    type=["xlsx", "csv"],
     accept_multiple_files=True
 )
 
 # ====================================
-# EMPTY STATE
+# WAIT FILES
 # ====================================
 
 if not uploaded_files:
@@ -127,7 +118,6 @@ if not uploaded_files:
 # ====================================
 
 tables = {}
-load_errors = []
 
 with st.spinner(
     "Загрузка файлов..."
@@ -135,36 +125,22 @@ with st.spinner(
 
     for file in uploaded_files:
 
-        try:
+        file_bytes = file.read()
 
-            file_bytes = file.read()
+        df = load_dataframe(
+            file_bytes,
+            file.name
+        )
 
-            df = load_dataframe(
-                file_bytes,
-                file.name
-            )
+        table_name = (
+            file.name
+            .replace(".xlsx", "")
+            .replace(".csv", "")
+        )
 
-            table_name = (
-                file.name
-                .replace(".xlsx", "")
-                .replace(".csv", "")
-            )
-
-            tables[
-                table_name
-            ] = df
-
-        except Exception as e:
-
-            load_errors.append(
-                f"{file.name}: {e}"
-            )
-
-if load_errors:
-
-    st.error(
-        "\n".join(load_errors)
-    )
+        tables[
+            table_name
+        ] = df
 
 if not tables:
 
@@ -176,3 +152,95 @@ if not tables:
 
 scenario = detect_scenario(
     tables
+)
+
+# ====================================
+# BUILD DATASET
+# ====================================
+
+with st.spinner(
+    "Подготовка данных..."
+):
+
+    if scenario == "time_series":
+
+        df = cached_combine_tables(
+            tables
+        )
+
+    elif scenario == "relational":
+
+        selected_table = st.selectbox(
+            "Выберите таблицу",
+            list(
+                tables.keys()
+            )
+        )
+
+        df = tables[
+            selected_table
+        ]
+
+    else:
+
+        df = list(
+            tables.values()
+        )[0]
+
+# ====================================
+# SEMANTICS
+# ====================================
+
+with st.spinner(
+    "Семантический анализ..."
+):
+
+    semantics = (
+        cached_semantics(
+            df
+        )
+    )
+
+# ====================================
+# FILTERS
+# ====================================
+
+filtered_df = (
+    render_filter_panel(
+        df,
+        semantics
+    )
+)
+
+# ====================================
+# DASHBOARD
+# ====================================
+
+with st.spinner(
+    "Построение дашборда..."
+):
+
+    dashboard = (
+        cached_dashboard(
+            filtered_df,
+            semantics,
+            scenario
+        )
+    )
+
+render_copilot_dashboard(
+    dashboard
+)
+
+# ====================================
+# DEBUG
+# ====================================
+
+with st.expander(
+    "📋 Предпросмотр данных"
+):
+
+    st.dataframe(
+        filtered_df.head(100),
+        use_container_width=True
+    )
