@@ -7,10 +7,68 @@ from utils.chart_factory import (
     build_abc_xyz_heatmap
 )
 
+from utils.kpi_dashboard import (
+    build_dashboard_kpis
+)
+
 
 def render_copilot_dashboard(
     dashboard
 ):
+
+    # ====================================
+    # KPI
+    # ====================================
+
+    semantic_model = dashboard.get(
+        "semantic_model",
+        {}
+    )
+
+    source_df = dashboard.get(
+        "source_df"
+    )
+
+    if (
+        source_df is not None
+        and semantic_model
+    ):
+
+        kpis = build_dashboard_kpis(
+            source_df,
+            semantic_model
+        )
+
+        if kpis:
+
+            st.subheader(
+                "📊 Ключевые показатели"
+            )
+
+            cols = st.columns(
+                len(kpis)
+            )
+
+            for i, (
+                name,
+                value
+            ) in enumerate(
+                kpis.items()
+            ):
+
+                try:
+
+                    cols[i].metric(
+                        name,
+                        f"{value:,.0f}"
+                    )
+
+                except Exception:
+
+                    cols[i].metric(
+                        name,
+                        str(value)
+                    )
 
     # ====================================
     # ПАСПОРТ
@@ -64,12 +122,14 @@ def render_copilot_dashboard(
         "🎯 Определение домена"
     )
 
-    for item in dashboard.get(
+    for explanation in dashboard.get(
         "domain_explanations",
         []
     ):
 
-        st.info(item)
+        st.info(
+            explanation
+        )
 
     # ====================================
     # ИНСАЙТЫ
@@ -79,12 +139,14 @@ def render_copilot_dashboard(
         "💡 Инсайты модели данных"
     )
 
-    for item in dashboard.get(
+    for insight in dashboard.get(
         "model_insights",
         []
     ):
 
-        st.success(item)
+        st.success(
+            insight
+        )
 
     # ====================================
     # ДОСТУПНЫЕ АНАЛИЗЫ
@@ -129,11 +191,11 @@ def render_copilot_dashboard(
         )
 
     # ====================================
-    # РЕЗУЛЬТАТЫ
+    # РЕЗУЛЬТАТЫ АНАЛИЗОВ
     # ====================================
 
     st.subheader(
-        "📊 Выполненные анализы"
+        "📈 Результаты анализов"
     )
 
     results = dashboard.get(
@@ -144,10 +206,8 @@ def render_copilot_dashboard(
     if not results:
 
         st.info(
-            "Нет результатов анализа."
+            "Результаты отсутствуют."
         )
-
-        return
 
     for result in results:
 
@@ -166,7 +226,7 @@ def render_copilot_dashboard(
         )
 
         with st.expander(
-            f"📈 {analysis_id}",
+            f"📊 {analysis_id}",
             expanded=True
         ):
 
@@ -181,13 +241,13 @@ def render_copilot_dashboard(
 
                 continue
 
-            # ======================
+            # ==========================
             # ABC
-            # ======================
+            # ==========================
 
             if (
-                analysis_id ==
-                "abc_analysis"
+                analysis_id
+                == "abc_analysis"
                 and isinstance(
                     data,
                     pd.DataFrame
@@ -196,10 +256,8 @@ def render_copilot_dashboard(
 
                 try:
 
-                    fig = (
-                        build_abc_chart(
-                            data
-                        )
+                    fig = build_abc_chart(
+                        data
                     )
 
                     st.plotly_chart(
@@ -210,7 +268,7 @@ def render_copilot_dashboard(
                 except Exception as e:
 
                     st.warning(
-                        f"Ошибка графика ABC: {e}"
+                        f"Ошибка ABC графика: {e}"
                     )
 
                 st.dataframe(
@@ -220,13 +278,13 @@ def render_copilot_dashboard(
 
                 continue
 
-            # ======================
+            # ==========================
             # XYZ
-            # ======================
+            # ==========================
 
             if (
-                analysis_id ==
-                "xyz_analysis"
+                analysis_id
+                == "xyz_analysis"
                 and isinstance(
                     data,
                     pd.DataFrame
@@ -235,10 +293,8 @@ def render_copilot_dashboard(
 
                 try:
 
-                    fig = (
-                        build_xyz_chart(
-                            data
-                        )
+                    fig = build_xyz_chart(
+                        data
                     )
 
                     st.plotly_chart(
@@ -249,7 +305,7 @@ def render_copilot_dashboard(
                 except Exception as e:
 
                     st.warning(
-                        f"Ошибка графика XYZ: {e}"
+                        f"Ошибка XYZ графика: {e}"
                     )
 
                 st.dataframe(
@@ -259,13 +315,13 @@ def render_copilot_dashboard(
 
                 continue
 
-            # ======================
+            # ==========================
             # ABC XYZ
-            # ======================
+            # ==========================
 
             if (
-                analysis_id ==
-                "abc_xyz_matrix"
+                analysis_id
+                == "abc_xyz_matrix"
                 and isinstance(
                     data,
                     dict
@@ -298,10 +354,14 @@ def render_copilot_dashboard(
                     except Exception as e:
 
                         st.warning(
-                            f"Ошибка тепловой карты: {e}"
+                            f"Ошибка Heatmap: {e}"
                         )
 
                 if summary is not None:
+
+                    st.markdown(
+                        "### Сводка ABC/XYZ"
+                    )
 
                     st.dataframe(
                         summary,
@@ -310,6 +370,10 @@ def render_copilot_dashboard(
 
                 if matrix is not None:
 
+                    st.markdown(
+                        "### Матрица ABC/XYZ"
+                    )
+
                     st.dataframe(
                         matrix.head(100),
                         use_container_width=True
@@ -317,9 +381,9 @@ def render_copilot_dashboard(
 
                 continue
 
-            # ======================
+            # ==========================
             # DataFrame
-            # ======================
+            # ==========================
 
             if isinstance(
                 data,
@@ -331,9 +395,9 @@ def render_copilot_dashboard(
                     use_container_width=True
                 )
 
-            # ======================
+            # ==========================
             # Dict
-            # ======================
+            # ==========================
 
             elif isinstance(
                 data,
@@ -358,14 +422,18 @@ def render_copilot_dashboard(
 
                     else:
 
-                        st.write(value)
+                        st.write(
+                            value
+                        )
 
             else:
 
-                st.write(data)
+                st.write(
+                    data
+                )
 
     # ====================================
-    # РЕКОМЕНДАЦИИ
+    # COPILOT
     # ====================================
 
     st.subheader(
