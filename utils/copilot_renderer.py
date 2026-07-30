@@ -19,6 +19,10 @@ from utils.executive_summary import (
     build_executive_summary
 )
 
+from utils.trend_dashboard import (
+    build_trend_chart
+)
+
 
 def render_copilot_dashboard(
     dashboard
@@ -86,7 +90,40 @@ def render_copilot_dashboard(
         )
 
     # ====================================
-    # ВИЗУАЛЬНАЯ АНАЛИТИКА
+    # ДИНАМИКА
+    # ====================================
+
+    try:
+
+        if (
+            source_df is not None
+            and semantic_model
+        ):
+
+            fig = build_trend_chart(
+                source_df,
+                semantic_model
+            )
+
+            if fig is not None:
+
+                st.subheader(
+                    "📈 Динамика стоимости"
+                )
+
+                st.plotly_chart(
+                    fig,
+                    use_container_width=True
+                )
+
+    except Exception as e:
+
+        st.warning(
+            f"Ошибка графика динамики: {e}"
+        )
+
+    # ====================================
+    # АНАЛИТИКА
     # ====================================
 
     st.subheader(
@@ -127,7 +164,7 @@ def render_copilot_dashboard(
                 continue
 
             # ==========================
-            # ABC XYZ MATRIX
+            # ABC XYZ
             # ==========================
 
             if (
@@ -270,7 +307,7 @@ def render_copilot_dashboard(
                     )
 
             # ==========================
-            # Inventory Dashboard
+            # INVENTORY
             # ==========================
 
             elif (
@@ -300,11 +337,11 @@ def render_copilot_dashboard(
                         )
 
     # ====================================
-    # ТЕХНИЧЕСКАЯ ИНФОРМАЦИЯ
+    # ДИАГНОСТИКА
     # ====================================
 
     st.subheader(
-        "⚙ Диагностическая информация"
+        "⚙ Диагностика"
     )
 
     passport = dashboard.get(
@@ -348,7 +385,7 @@ def render_copilot_dashboard(
         )
 
     with st.expander(
-        "Объяснение определения домена"
+        "Объяснение домена"
     ):
 
         for item in dashboard.get(
@@ -414,8 +451,6 @@ def render_copilot_dashboard(
             []
         )
 
-        for recommendation in recommendations:
+        for item in recommendations:
 
-            st.write(
-                recommendation
-            )
+            st.write(item)
