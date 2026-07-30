@@ -23,6 +23,14 @@ from utils.trend_dashboard import (
     build_trend_chart
 )
 
+from utils.top_materials import (
+    build_top_materials
+)
+
+from utils.top_materials_chart import (
+    build_top_materials_chart
+)
+
 
 def render_copilot_dashboard(
     dashboard
@@ -120,6 +128,70 @@ def render_copilot_dashboard(
 
         st.warning(
             f"Ошибка графика динамики: {e}"
+        )
+
+    # ====================================
+    # ТОП МАТЕРИАЛОВ
+    # ====================================
+
+    try:
+
+        if (
+            source_df is not None
+            and semantic_model
+        ):
+
+            top_df = build_top_materials(
+                source_df,
+                semantic_model,
+                top_n=20
+            )
+
+            if top_df is not None:
+
+                entities = semantic_model.get(
+                    "entities",
+                    {}
+                )
+
+                product_column = (
+                    entities["product"][0]
+                )
+
+                amount_column = (
+                    entities["amount"][0]
+                )
+
+                fig = (
+                    build_top_materials_chart(
+                        top_df,
+                        product_column,
+                        amount_column
+                    )
+                )
+
+                st.subheader(
+                    "🔥 ТОП-20 материалов"
+                )
+
+                st.plotly_chart(
+                    fig,
+                    use_container_width=True
+                )
+
+                with st.expander(
+                    "Детализация ТОП-20"
+                ):
+
+                    st.dataframe(
+                        top_df,
+                        use_container_width=True
+                    )
+
+    except Exception as e:
+
+        st.warning(
+            f"Ошибка ТОП материалов: {e}"
         )
 
     # ====================================
