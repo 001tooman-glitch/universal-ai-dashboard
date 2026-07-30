@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 
 from utils.profiler import build_profile
 from utils.domain_detector import detect_domain
@@ -26,9 +25,15 @@ uploaded_files = st.file_uploader(
     accept_multiple_files=True
 )
 
-tables = {}
+if not uploaded_files:
 
-if uploaded_files:
+    st.info(
+        "Загрузите Excel или CSV файлы."
+    )
+
+else:
+
+    tables = {}
 
     for file in uploaded_files:
 
@@ -36,16 +41,17 @@ if uploaded_files:
 
             if file.name.endswith(".csv"):
                 df = pd.read_csv(file)
+
             else:
                 df = pd.read_excel(file)
 
-            name = (
+            table_name = (
                 file.name
                 .replace(".xlsx", "")
                 .replace(".csv", "")
             )
 
-            tables[name] = df
+            tables[table_name] = df
 
         except Exception as e:
 
@@ -62,7 +68,7 @@ if uploaded_files:
     elif scenario == "relational":
 
         selected_table = st.selectbox(
-            "Таблица",
+            "Выберите таблицу",
             list(tables.keys())
         )
 
@@ -78,7 +84,7 @@ if uploaded_files:
 
     kpis = detect_kpis(df)
 
-    ai_recommendations = recommend_analyses(
+    recommendations = recommend_analyses(
         domain,
         scenario,
         semantics
@@ -94,12 +100,12 @@ if uploaded_files:
 
     st.subheader("🤖 AI рекомендации")
 
-    for item in ai_recommendations:
+    for item in recommendations:
 
         st.write(f"✅ {item}")
 
     st.subheader(
-        "🎯 Автоматически найденные KPI"
+        "🎯 Найденные KPI"
     )
 
     kpi_report = build_kpi_report(
@@ -130,34 +136,27 @@ if uploaded_files:
         "📊 Статистика данных"
     )
 
-    k1, k2, k3, k4 = st.columns(4)
+    s1, s2, s3, s4 = st.columns(4)
 
-    k1.metric(
-        "Строк",
-        len(df)
+    s1.metric("Строк", len(df))
+    s2.metric("Столбцов", len(df.columns))
+    s3.metric("Пропусков", int(df.isna().sum().sum()))
+    s4.metric("Дубликатов", int(df.duplicated().sum()))
+
+    st.subheader(
+        "🧩 Структура данных"
     )
 
-    k2.metric(
-        "Столбцов",
-        len(df.columns)
-    )
-
-    k3.metric(
-        "Пропусков",
-        int(df.isna().sum().sum())
-    )
-
-    k4.metric(
-        "Дубликатов",
-        int(df.duplicated().sum())
+    st.dataframe(
+        build_profile(df),
+        use_container_width=True
     )
 
     st.subheader(
-    "📄 Предпросмотр"
-)
+        "📄 Предпросмотр"
+    )
 
-st.dataframe(
-    df.head(100),
-    use_container_width=True
-)
-
+    st.dataframe(
+        df.head(100),
+        use_container_width=True
+    )
