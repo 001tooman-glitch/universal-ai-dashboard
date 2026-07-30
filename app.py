@@ -13,6 +13,7 @@ from utils.periods import sort_periods
 from utils.domain_router import route_analysis
 from utils.semantic_analyzer import analyze_semantics
 from utils.semantic_report import build_semantic_report
+from utils.dashboard_selector import select_dashboard
 
 st.set_page_config(
     page_title="Universal AI Dashboard",
@@ -39,6 +40,7 @@ if uploaded_files:
 
             if file.name.endswith(".csv"):
                 df = pd.read_csv(file)
+
             else:
                 df = pd.read_excel(file)
 
@@ -60,8 +62,7 @@ if uploaded_files:
 
     if scenario == "time_series":
 
-        merged_df = combine_tables(tables)
-        df = merged_df
+        df = combine_tables(tables)
 
     elif scenario == "relational":
 
@@ -76,15 +77,25 @@ if uploaded_files:
 
         df = list(tables.values())[0]
 
-    # ====================================
-    # ПРЕДМЕТНАЯ ОБЛАСТЬ
-    # ====================================
-
     domain = detect_domain(df)
+
+    semantics = analyze_semantics(df)
 
     route = route_analysis(
         domain,
         scenario
     )
+
+    dashboard = select_dashboard(
+        domain,
+        scenario,
+        semantics
+    )
+
+    # ====================================
+    # ПАСПОРТ АНАЛИЗА
+    # ====================================
+
+    st.subheader("🧠 Паспорт анализа")
 
  
