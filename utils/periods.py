@@ -17,7 +17,7 @@ MONTHS = {
 
 def period_to_date(period):
 
-    month_name, year = period.lower().split()
+    month_name, year = str(period).lower().split()
 
     year = int(year)
 
@@ -27,3 +27,10 @@ def period_to_date(period):
     month = MONTHS[month_name]
 
     return datetime(year, month, 1)
+
+def sort_periods(periods):
+
+    return sorted(
+        periods,
+        key=period_to_date
+    )
