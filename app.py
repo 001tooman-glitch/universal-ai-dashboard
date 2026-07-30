@@ -152,4 +152,17 @@ if uploaded_files:
         int(df.duplicated().sum())
     )
 
-    st.
+    st.subheader(
+    "📄 Предпросмотр"
+)
+
+st.dataframe(
+    df.head(100),
+    use_container_width=True
+)
+
+else:
+
+    st.info(
+        "Загрузите Excel или CSV файлы."
+    )
