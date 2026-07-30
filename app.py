@@ -11,6 +11,8 @@ from utils.scenario_detector import detect_scenario
 from utils.time_series import combine_tables
 from utils.periods import sort_periods
 from utils.domain_router import route_analysis
+from utils.semantic_analyzer import analyze_semantics
+from utils.semantic_report import build_semantic_report
 
 st.set_page_config(
     page_title="Universal AI Dashboard",
@@ -37,7 +39,6 @@ if uploaded_files:
 
             if file.name.endswith(".csv"):
                 df = pd.read_csv(file)
-
             else:
                 df = pd.read_excel(file)
 
@@ -60,7 +61,6 @@ if uploaded_files:
     if scenario == "time_series":
 
         merged_df = combine_tables(tables)
-
         df = merged_df
 
     elif scenario == "relational":
@@ -76,9 +76,9 @@ if uploaded_files:
 
         df = list(tables.values())[0]
 
-    # -----------------------------------
-    # Определение предметной области
-    # -----------------------------------
+    # ====================================
+    # ПРЕДМЕТНАЯ ОБЛАСТЬ
+    # ====================================
 
     domain = detect_domain(df)
 
@@ -87,33 +87,4 @@ if uploaded_files:
         scenario
     )
 
-    # -----------------------------------
-    # Общая информация
-    # -----------------------------------
-
-    st.subheader("🧠 Анализ данных")
-
-    c1, c2, c3 = st.columns(3)
-
-    c1.metric(
-        "Сценарий",
-        scenario
-    )
-
-    c2.metric(
-        "Область",
-        domain
-    )
-
-    c3.metric(
-        "Записей",
-        len(df)
-    )
-
-    st.success(
-        f"Выбран дашборд: {route['dashboard']}"
-    )
-
-    # -----------------------------------
-    # Рекомендуемые анализы
-    # 
+ 
