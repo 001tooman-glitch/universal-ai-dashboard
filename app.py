@@ -161,8 +161,3 @@ st.dataframe(
     use_container_width=True
 )
 
-else:
-
-    st.info(
-        "Загрузите Excel или CSV файлы."
-    )
