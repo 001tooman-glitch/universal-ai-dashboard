@@ -12,10 +12,6 @@ from utils.scenario_detector import detect_scenario
 from utils.time_series import combine_tables
 from utils.periods import sort_periods
 
-# ==================================================
-# НАСТРОЙКА
-# ==================================================
-
 st.set_page_config(
     page_title="Universal AI Dashboard",
     page_icon="📊",
@@ -25,10 +21,6 @@ st.set_page_config(
 st.title("📊 Universal AI Dashboard")
 st.write("Универсальная платформа анализа данных")
 
-# ==================================================
-# ЗАГРУЗКА ФАЙЛОВ
-# ==================================================
-
 uploaded_files = st.file_uploader(
     "Загрузите один или несколько файлов",
     type=["xlsx", "csv"],
@@ -36,10 +28,6 @@ uploaded_files = st.file_uploader(
 )
 
 tables = {}
-
-# ==================================================
-# ОБРАБОТКА
-# ==================================================
 
 if uploaded_files:
 
@@ -49,7 +37,6 @@ if uploaded_files:
 
             if file.name.endswith(".csv"):
                 df = pd.read_csv(file)
-
             else:
                 df = pd.read_excel(file)
 
@@ -71,10 +58,6 @@ if uploaded_files:
         f"Загружено файлов: {len(tables)}"
     )
 
-    # =============================================
-    # ОПРЕДЕЛЕНИЕ СЦЕНАРИЯ
-    # =============================================
-
     scenario = detect_scenario(tables)
 
     st.subheader("🧠 Определение сценария")
@@ -87,21 +70,17 @@ if uploaded_files:
 
         merged_df = combine_tables(tables)
 
-        col1, col2 = st.columns(2)
+        c1, c2 = st.columns(2)
 
-        with col1:
+        c1.metric(
+            "Всего записей",
+            f"{len(merged_df):,}"
+        )
 
-            st.metric(
-                "Всего записей",
-                f"{len(merged_df):,}"
-            )
-
-        with col2:
-
-            st.metric(
-                "Количество периодов",
-                merged_df["Период"].nunique()
-            )
+        c2.metric(
+            "Периодов",
+            merged_df["Период"].nunique()
+        )
 
         st.subheader("📅 Периоды")
 
@@ -121,13 +100,15 @@ if uploaded_files:
             use_container_width=True
         )
 
-        # =========================================
+        # =====================================
         # ДИНАМИКА СТОИМОСТИ
-        # =========================================
+        # =====================================
 
         if "Общая стоимость" in merged_df.columns:
 
-            st.subheader("📈 Динамика общей стоимости")
+            st.subheader(
+                "📈 Динамика общей стоимости"
+            )
 
             trend = (
                 merged_df
@@ -163,6 +144,96 @@ if uploaded_files:
                 use_container_width=True
             )
 
+        # =====================================
+        # СРАВНЕНИЕ ПЕРИОДОВ
+        # =====================================
+
+        st.subheader(
+            "📊 Сравнение периодов"
+        )
+
+        available_periods = sort_periods(
+            merged_df["Период"]
+            .unique()
+            .tolist()
+        )
+
+        if len(available_periods) >= 2:
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+
+                period_1 = st.selectbox(
+                    "Период 1",
+                    available_periods,
+                    key="period_1"
+                )
+
+            with col2:
+
+                period_2 = st.selectbox(
+                    "Период 2",
+                    available_periods,
+                    index=len(
+                        available_periods
+                    ) - 1,
+                    key="period_2"
+                )
+
+            df1 = merged_df[
+                merged_df["Период"] == period_1
+            ]
+
+            df2 = merged_df[
+                merged_df["Период"] == period_2
+            ]
+
+            if "Общая стоимость" in merged_df.columns:
+
+                value1 = (
+                    df1["Общая стоимость"]
+                    .sum()
+                )
+
+                value2 = (
+                    df2["Общая стоимость"]
+                    .sum()
+                )
+
+                diff = value2 - value1
+
+                pct = 0
+
+                if value1 != 0:
+
+                    pct = (
+                        diff
+                        / value1
+                    ) * 100
+
+                k1, k2, k3, k4 = st.columns(4)
+
+                k1.metric(
+                    period_1,
+                    f"{value1:,.0f}"
+                )
+
+                k2.metric(
+                    period_2,
+                    f"{value2:,.0f}"
+                )
+
+                k3.metric(
+                    "Изменение",
+                    f"{diff:,.0f}"
+                )
+
+                k4.metric(
+                    "Изменение %",
+                    f"{pct:,.2f}%"
+                )
+
         df = merged_df
 
     elif scenario == "relational":
@@ -179,10 +250,10 @@ if uploaded_files:
 
                 "Таблица": name,
                 "Строк": len(table),
-                "Столбцов": len(table.columns)
+                "Столбцов": len(
+                    table.columns
+                )
             })
-
-        st.subheader("📂 Загруженные таблицы")
 
         st.dataframe(
             pd.DataFrame(info),
@@ -195,7 +266,9 @@ if uploaded_files:
 
         if len(relations):
 
-            st.subheader("🔗 Найденные связи")
+            st.subheader(
+                "🔗 Найденные связи"
+            )
 
             st.dataframe(
                 relations,
@@ -215,11 +288,13 @@ if uploaded_files:
             "Загружен один файл."
         )
 
-        df = list(tables.values())[0]
+        df = list(
+            tables.values()
+        )[0]
 
-    # =============================================
+    # =====================================
     # KPI
-    # =============================================
+    # =====================================
 
     st.subheader("📊 KPI")
 
@@ -237,59 +312,74 @@ if uploaded_files:
 
     c3.metric(
         "Пропусков",
-        int(df.isna().sum().sum())
+        int(
+            df.isna()
+            .sum()
+            .sum()
+        )
     )
 
     c4.metric(
         "Дубликатов",
-        int(df.duplicated().sum())
+        int(
+            df.duplicated()
+            .sum()
+        )
     )
 
-    # =============================================
-    # ПРЕДМЕТНАЯ ОБЛАСТЬ
-    # =============================================
+    # =====================================
+    # ОБЛАСТЬ
+    # =====================================
 
     domain = detect_domain(df)
 
-    st.subheader("🎯 Предметная область")
+    st.subheader(
+        "🎯 Предметная область"
+    )
 
     st.success(domain)
 
-    # =============================================
-    # РЕКОМЕНДАЦИИ
-    # =============================================
+    st.subheader(
+        "💡 Рекомендованные анализы"
+    )
 
-    st.subheader("💡 Рекомендованные анализы")
+    for item in get_recommendations(
+        domain
+    ):
 
-    for item in get_recommendations(domain):
+        st.write(
+            f"✅ {item}"
+        )
 
-        st.write(f"✅ {item}")
+    # =====================================
+    # ДАННЫЕ
+    # =====================================
 
-    # =============================================
-    # ПРЕДПРОСМОТР
-    # =============================================
-
-    st.subheader("📄 Предпросмотр данных")
+    st.subheader(
+        "📄 Предпросмотр данных"
+    )
 
     st.dataframe(
         df.head(100),
         use_container_width=True
     )
 
-    # =============================================
+    # =====================================
     # СТРУКТУРА
-    # =============================================
+    # =====================================
 
-    st.subheader("🧩 Структура данных")
+    st.subheader(
+        "🧩 Структура данных"
+    )
 
     st.dataframe(
         build_profile(df),
         use_container_width=True
     )
 
-    # =============================================
+    # =====================================
     # ВИЗУАЛИЗАЦИЯ
-    # =============================================
+    # =====================================
 
     numeric_cols = list(
         df.select_dtypes(
@@ -305,7 +395,9 @@ if uploaded_files:
 
     if numeric_cols and category_cols:
 
-        st.subheader("📈 Анализ")
+        st.subheader(
+            "📊 Анализ"
+        )
 
         metric = st.selectbox(
             "Показатель",
