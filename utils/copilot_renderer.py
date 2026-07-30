@@ -1,13 +1,19 @@
 import streamlit as st
 import pandas as pd
 
+from utils.chart_factory import (
+    build_abc_chart,
+    build_xyz_chart,
+    build_abc_xyz_heatmap
+)
+
 
 def render_copilot_dashboard(
     dashboard
 ):
 
     # ====================================
-    # Паспорт данных
+    # ПАСПОРТ
     # ====================================
 
     passport = dashboard.get(
@@ -51,7 +57,7 @@ def render_copilot_dashboard(
     )
 
     # ====================================
-    # Объяснение домена
+    # ДОМЕН
     # ====================================
 
     st.subheader(
@@ -66,7 +72,7 @@ def render_copilot_dashboard(
         st.info(item)
 
     # ====================================
-    # Инсайты модели данных
+    # ИНСАЙТЫ
     # ====================================
 
     st.subheader(
@@ -81,7 +87,7 @@ def render_copilot_dashboard(
         st.success(item)
 
     # ====================================
-    # Доступные анализы
+    # ДОСТУПНЫЕ АНАЛИЗЫ
     # ====================================
 
     st.subheader(
@@ -95,17 +101,15 @@ def render_copilot_dashboard(
 
     if analyses:
 
-        analyses_df = pd.DataFrame(
-            analyses
-        )
-
         st.dataframe(
-            analyses_df,
+            pd.DataFrame(
+                analyses
+            ),
             use_container_width=True
         )
 
     # ====================================
-    # План анализа
+    # ПЛАН АНАЛИЗА
     # ====================================
 
     st.subheader(
@@ -125,7 +129,7 @@ def render_copilot_dashboard(
         )
 
     # ====================================
-    # Результаты анализов
+    # РЕЗУЛЬТАТЫ
     # ====================================
 
     st.subheader(
@@ -143,82 +147,225 @@ def render_copilot_dashboard(
             "Нет результатов анализа."
         )
 
-    else:
+        return
 
-        for result in results:
+    for result in results:
 
-            analysis_id = result.get(
-                "analysis_id",
-                "unknown"
-            )
+        analysis_id = result.get(
+            "analysis_id",
+            "unknown"
+        )
 
-            success = result.get(
-                "success",
-                False
-            )
+        success = result.get(
+            "success",
+            False
+        )
 
-            with st.expander(
-                f"Анализ: {analysis_id}"
+        data = result.get(
+            "data"
+        )
+
+        with st.expander(
+            f"📈 {analysis_id}",
+            expanded=True
+        ):
+
+            if not success:
+
+                st.warning(
+                    result.get(
+                        "message",
+                        "Ошибка выполнения"
+                    )
+                )
+
+                continue
+
+            # ======================
+            # ABC
+            # ======================
+
+            if (
+                analysis_id ==
+                "abc_analysis"
+                and isinstance(
+                    data,
+                    pd.DataFrame
+                )
             ):
 
-                if not success:
+                try:
 
-                    st.warning(
-                        result.get(
-                            "message",
-                            "Ошибка выполнения."
+                    fig = (
+                        build_abc_chart(
+                            data
                         )
                     )
 
-                    continue
-
-                data = result.get(
-                    "data"
-                )
-
-                if isinstance(
-                    data,
-                    pd.DataFrame
-                ):
-
-                    st.dataframe(
-                        data.head(100),
+                    st.plotly_chart(
+                        fig,
                         use_container_width=True
                     )
 
-                elif isinstance(
+                except Exception as e:
+
+                    st.warning(
+                        f"Ошибка графика ABC: {e}"
+                    )
+
+                st.dataframe(
+                    data.head(100),
+                    use_container_width=True
+                )
+
+                continue
+
+            # ======================
+            # XYZ
+            # ======================
+
+            if (
+                analysis_id ==
+                "xyz_analysis"
+                and isinstance(
+                    data,
+                    pd.DataFrame
+                )
+            ):
+
+                try:
+
+                    fig = (
+                        build_xyz_chart(
+                            data
+                        )
+                    )
+
+                    st.plotly_chart(
+                        fig,
+                        use_container_width=True
+                    )
+
+                except Exception as e:
+
+                    st.warning(
+                        f"Ошибка графика XYZ: {e}"
+                    )
+
+                st.dataframe(
+                    data.head(100),
+                    use_container_width=True
+                )
+
+                continue
+
+            # ======================
+            # ABC XYZ
+            # ======================
+
+            if (
+                analysis_id ==
+                "abc_xyz_matrix"
+                and isinstance(
                     data,
                     dict
-                ):
+                )
+            ):
 
-                    for name, value in data.items():
+                matrix = data.get(
+                    "matrix"
+                )
 
-                        st.markdown(
-                            f"**{name}**"
+                summary = data.get(
+                    "summary"
+                )
+
+                if matrix is not None:
+
+                    try:
+
+                        fig = (
+                            build_abc_xyz_heatmap(
+                                matrix
+                            )
                         )
 
-                        if isinstance(
-                            value,
-                            pd.DataFrame
-                        ):
+                        st.plotly_chart(
+                            fig,
+                            use_container_width=True
+                        )
 
-                            st.dataframe(
-                                value.head(100),
-                                use_container_width=True
-                            )
+                    except Exception as e:
 
-                        else:
+                        st.warning(
+                            f"Ошибка тепловой карты: {e}"
+                        )
 
-                            st.write(
-                                value
-                            )
+                if summary is not None:
 
-                else:
+                    st.dataframe(
+                        summary,
+                        use_container_width=True
+                    )
 
-                    st.write(data)
+                if matrix is not None:
+
+                    st.dataframe(
+                        matrix.head(100),
+                        use_container_width=True
+                    )
+
+                continue
+
+            # ======================
+            # DataFrame
+            # ======================
+
+            if isinstance(
+                data,
+                pd.DataFrame
+            ):
+
+                st.dataframe(
+                    data.head(100),
+                    use_container_width=True
+                )
+
+            # ======================
+            # Dict
+            # ======================
+
+            elif isinstance(
+                data,
+                dict
+            ):
+
+                for key, value in data.items():
+
+                    st.markdown(
+                        f"**{key}**"
+                    )
+
+                    if isinstance(
+                        value,
+                        pd.DataFrame
+                    ):
+
+                        st.dataframe(
+                            value.head(100),
+                            use_container_width=True
+                        )
+
+                    else:
+
+                        st.write(value)
+
+            else:
+
+                st.write(data)
 
     # ====================================
-    # Рекомендации Copilot
+    # РЕКОМЕНДАЦИИ
     # ====================================
 
     st.subheader(
