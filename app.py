@@ -1,18 +1,20 @@
 import streamlit as st
 import pandas as pd
 
-from utils.profiler import build_profile
-from utils.domain_detector import detect_domain
 from utils.scenario_detector import detect_scenario
 from utils.time_series import combine_tables
-from utils.semantic_analyzer import analyze_semantics
-from utils.semantic_report import build_semantic_report
-from utils.kpi_detector import detect_kpis
-from utils.kpi_report import build_kpi_report
-from utils.analysis_recommender import recommend_analyses
-from utils.insight_generator import generate_insights
-from utils.business_rules import evaluate_business_rules
-from utils.abc_analyzer import run_abc_analysis
+
+from utils.semantic_analyzer import (
+    analyze_semantics
+)
+
+from utils.copilot_dashboard import (
+    build_copilot_dashboard
+)
+
+from utils.copilot_renderer import (
+    render_copilot_dashboard
+)
 
 st.set_page_config(
     page_title="Universal AI Dashboard",
@@ -21,9 +23,12 @@ st.set_page_config(
 )
 
 st.title("📊 Universal AI Dashboard")
+st.write(
+    "Универсальная AI-платформа анализа данных"
+)
 
 uploaded_files = st.file_uploader(
-    "Загрузите один или несколько файлов",
+    "Загрузите Excel или CSV файлы",
     type=["xlsx", "csv"],
     accept_multiple_files=True
 )
@@ -31,20 +36,27 @@ uploaded_files = st.file_uploader(
 if not uploaded_files:
 
     st.info(
-        "Загрузите Excel или CSV файлы."
+        "Загрузите один или несколько файлов."
     )
 
 else:
 
     tables = {}
 
+    load_errors = []
+
     for file in uploaded_files:
 
         try:
 
-            if file.name.endswith(".csv"):
+            if file.name.lower().endswith(
+                ".csv"
+            ):
+
                 df = pd.read_csv(file)
+
             else:
+
                 df = pd.read_excel(file)
 
             table_name = (
@@ -57,179 +69,108 @@ else:
 
         except Exception as e:
 
-            st.error(
-                f"Ошибка загрузки {file.name}: {e}"
+            load_errors.append(
+                f"{file.name}: {e}"
             )
 
-    scenario = detect_scenario(tables)
+    if load_errors:
 
-    if scenario == "time_series":
-
-        df = combine_tables(tables)
-
-    elif scenario == "relational":
-
-        table_name = st.selectbox(
-            "Выберите таблицу",
-            list(tables.keys())
+        st.error(
+            "\n".join(load_errors)
         )
 
-        df = tables[table_name]
+    if not tables:
 
-    else:
+        st.stop()
 
-        df = list(
-            tables.values()
-        )[0]
-
-    domain = detect_domain(df)
-
-    semantics = analyze_semantics(df)
-
-    kpis = detect_kpis(df)
-
-    recommendations = recommend_analyses(
-        domain,
-        scenario,
-        semantics
+    scenario = detect_scenario(
+        tables
     )
 
-    insights = generate_insights(
-        df,
-        domain,
+    st.subheader(
+        "🔍 Информация о загрузке"
+    )
+
+    col1, col2 = st.columns(2)
+
+    col1.metric(
+        "Файлов",
+        len(tables)
+    )
+
+    col2.metric(
+        "Сценарий",
         scenario
     )
 
-    business_rules = evaluate_business_rules(
-        df,
-        domain,
-        scenario,
-        semantics
-    )
+    try:
 
-    # ====================================
-    # ПАСПОРТ АНАЛИЗА
-    # ====================================
+        if scenario == "time_series":
 
-    st.subheader("🧠 Паспорт анализа")
+            df = combine_tables(
+                tables
+            )
 
-    c1, c2, c3 = st.columns(3)
+        elif scenario == "relational":
 
-    c1.metric("Сценарий", scenario)
-    c2.metric("Область", domain)
-    c3.metric("Записей", len(df))
+            selected_table = st.selectbox(
+                "Выберите таблицу",
+                list(tables.keys())
+            )
 
-    # ====================================
-    # ИНСАЙТЫ
-    # ====================================
+            df = tables[
+                selected_table
+            ]
 
-    st.subheader(
-        "🤖 Автоматические инсайты"
-    )
+        else:
 
-    for insight in insights:
+            df = list(
+                tables.values()
+            )[0]
 
-        st.info(insight)
-
-    # ====================================
-    # БИЗНЕС-ПРАВИЛА
-    # ====================================
-
-    st.subheader(
-        "📋 Бизнес-правила и возможности анализа"
-    )
-
-    for rule in business_rules:
-
-        st.success(rule)
-
-    # ====================================
-    # РЕКОМЕНДАЦИИ
-    # ====================================
-
-    st.subheader(
-        "💡 Рекомендуемые анализы"
-    )
-
-    for item in recommendations:
-
-        st.write(f"✅ {item}")
-
-    # ====================================
-    # KPI
-    # ====================================
-
-    st.subheader(
-        "🎯 Автоматически найденные KPI"
-    )
-
-    kpi_report = build_kpi_report(
-        df,
-        kpis
-    )
-
-    if len(kpi_report) > 0:
-
-        st.dataframe(
-            kpi_report,
-            use_container_width=True
+        st.subheader(
+            "📄 Активный набор данных"
         )
 
-    # ====================================
-    # СЕМАНТИКА
-    # ====================================
+        c1, c2 = st.columns(2)
+
+        c1.metric(
+            "Строк",
+            len(df)
+        )
+
+        c2.metric(
+            "Столбцов",
+            len(df.columns)
+        )
+
+        semantics = analyze_semantics(
+            df
+        )
+
+        dashboard = (
+            build_copilot_dashboard(
+                df=df,
+                semantics=semantics,
+                scenario=scenario
+            )
+        )
+
+        render_copilot_dashboard(
+            dashboard
+        )
+
+    except Exception as e:
+
+        st.error(
+            f"Ошибка анализа данных: {e}"
+        )
 
     st.subheader(
-        "🧠 Семантический анализ"
-    )
-
-    semantic_report = build_semantic_report(
-        df,
-        semantics
+        "📋 Предпросмотр данных"
     )
 
     st.dataframe(
-        semantic_report,
+        df.head(100),
         use_container_width=True
     )
-
-    # ====================================
-    # ABC АНАЛИЗ
-    # ====================================
-
-    product_cols = [
-        col
-        for col, role in semantics.items()
-        if role == "product"
-    ]
-
-    amount_cols = [
-        col
-        for col, role in semantics.items()
-        if role == "amount"
-    ]
-
-    if product_cols and amount_cols:
-
-        st.subheader(
-            "📊 ABC-анализ"
-        )
-
-        product_col = product_cols[0]
-        amount_col = amount_cols[0]
-
-        try:
-
-            abc_df = run_abc_analysis(
-                df,
-                product_col,
-                amount_col
-            )
-
-            abc_summary = (
-                abc_df.groupby("ABC")
-                .size()
-                .reset_index(name="Количество")
-            )
-
-            st.
