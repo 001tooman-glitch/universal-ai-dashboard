@@ -19,6 +19,12 @@ def run_abc_analysis(
 
     total = abc[value_column].sum()
 
+    if total == 0:
+        abc["Доля"] = 0
+        abc["Накопленная доля"] = 0
+        abc["ABC"] = "C"
+        return abc
+
     abc["Доля"] = (
         abc[value_column] / total
     )
@@ -27,12 +33,12 @@ def run_abc_analysis(
         abc["Доля"].cumsum()
     )
 
-    def classify(x):
+    def classify(value):
 
-        if x <= 0.8:
+        if value <= 0.80:
             return "A"
 
-        if x <= 0.95:
+        if value <= 0.95:
             return "B"
 
         return "C"
