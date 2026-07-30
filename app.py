@@ -10,6 +10,7 @@ from utils.semantic_report import build_semantic_report
 from utils.kpi_detector import detect_kpis
 from utils.kpi_report import build_kpi_report
 from utils.analysis_recommender import recommend_analyses
+from utils.insight_generator import generate_insights
 
 st.set_page_config(
     page_title="Universal AI Dashboard",
@@ -67,16 +68,18 @@ else:
 
     elif scenario == "relational":
 
-        selected_table = st.selectbox(
+        table_name = st.selectbox(
             "Выберите таблицу",
             list(tables.keys())
         )
 
-        df = tables[selected_table]
+        df = tables[table_name]
 
     else:
 
-        df = list(tables.values())[0]
+        df = list(
+            tables.values()
+        )[0]
 
     domain = detect_domain(df)
 
@@ -90,22 +93,65 @@ else:
         semantics
     )
 
+    insights = generate_insights(
+        df,
+        domain,
+        scenario
+    )
+
+    # ====================================
+    # ПАСПОРТ АНАЛИЗА
+    # ====================================
+
     st.subheader("🧠 Паспорт анализа")
 
     c1, c2, c3 = st.columns(3)
 
-    c1.metric("Сценарий", scenario)
-    c2.metric("Область", domain)
-    c3.metric("Записей", len(df))
+    c1.metric(
+        "Сценарий",
+        scenario
+    )
 
-    st.subheader("🤖 AI рекомендации")
+    c2.metric(
+        "Область",
+        domain
+    )
+
+    c3.metric(
+        "Записей",
+        len(df)
+    )
+
+    # ====================================
+    # ИНСАЙТЫ
+    # ====================================
+
+    st.subheader(
+        "🤖 Автоматические инсайты"
+    )
+
+    for insight in insights:
+
+        st.info(insight)
+
+    # ====================================
+    # РЕКОМЕНДАЦИИ
+    # ====================================
+
+    st.subheader(
+        "💡 Рекомендуемые анализы"
+    )
 
     for item in recommendations:
 
         st.write(f"✅ {item}")
 
+    # ====================================
+    # KPI
+    # ====================================
+
     st.subheader(
-        "🎯 Найденные KPI"
+        "🎯 Автоматически найденные KPI"
     )
 
     kpi_report = build_kpi_report(
@@ -113,35 +159,64 @@ else:
         kpis
     )
 
-    if len(kpi_report):
+    if len(kpi_report) > 0:
 
         st.dataframe(
             kpi_report,
             use_container_width=True
         )
 
+    # ====================================
+    # СЕМАНТИКА
+    # ====================================
+
     st.subheader(
         "🧠 Семантический анализ"
     )
 
+    semantic_report = build_semantic_report(
+        df,
+        semantics
+    )
+
     st.dataframe(
-        build_semantic_report(
-            df,
-            semantics
-        ),
+        semantic_report,
         use_container_width=True
     )
+
+    # ====================================
+    # СТАТИСТИКА
+    # ====================================
 
     st.subheader(
         "📊 Статистика данных"
     )
 
-    s1, s2, s3, s4 = st.columns(4)
+    c1, c2, c3, c4 = st.columns(4)
 
-    s1.metric("Строк", len(df))
-    s2.metric("Столбцов", len(df.columns))
-    s3.metric("Пропусков", int(df.isna().sum().sum()))
-    s4.metric("Дубликатов", int(df.duplicated().sum()))
+    c1.metric(
+        "Строк",
+        len(df)
+    )
+
+    c2.metric(
+        "Столбцов",
+        len(df.columns)
+    )
+
+    c3.metric(
+        "Пропусков",
+        int(df.isna().sum().sum())
+    )
+
+    c4.metric(
+        "Дубликатов",
+        int(df.duplicated().sum())
+    )
+
+    # ====================================
+    # СТРУКТУРА
+    # ====================================
 
     st.subheader(
         "🧩 Структура данных"
@@ -151,6 +226,10 @@ else:
         build_profile(df),
         use_container_width=True
     )
+
+    # ====================================
+    # ПРЕДПРОСМОТР
+    # ====================================
 
     st.subheader(
         "📄 Предпросмотр"
