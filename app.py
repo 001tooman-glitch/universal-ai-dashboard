@@ -16,6 +16,7 @@ from utils.semantic_report import build_semantic_report
 from utils.dashboard_selector import select_dashboard
 from utils.kpi_detector import detect_kpis
 from utils.kpi_report import build_kpi_report
+from utils.analysis_recommender import recommend_analyses
 
 st.set_page_config(
     page_title="Universal AI Dashboard",
@@ -59,4 +60,40 @@ if uploaded_files:
                 f"Ошибка загрузки {file.name}: {e}"
             )
 
-    scenario = detect_scenario
+    scenario = detect_scenario(tables)
+
+    if scenario == "time_series":
+
+        df = combine_tables(tables)
+
+    elif scenario == "relational":
+
+        selected_table = st.selectbox(
+            "Выберите таблицу",
+            list(tables.keys())
+        )
+
+        df = tables[selected_table]
+
+    else:
+
+        df = list(tables.values())[0]
+
+    domain = detect_domain(df)
+
+    semantics = analyze_semantics(df)
+
+    route = route_analysis(
+        domain,
+        scenario
+    )
+
+    dashboard = select_dashboard(
+        domain,
+        scenario,
+        semantics
+    )
+
+    kpis = detect_kpis(df)
+
+    ai_recommendations =
