@@ -64,14 +64,12 @@ def render_copilot_dashboard(
 
     with tab1:
 
-        # KPI
+        try:
 
-        if (
-            source_df is not None
-            and semantic_model
-        ):
-
-            try:
+            if (
+                source_df is not None
+                and semantic_model
+            ):
 
                 kpis = build_dashboard_kpis(
                     source_df,
@@ -82,18 +80,13 @@ def render_copilot_dashboard(
                     kpis
                 )
 
-            except Exception as e:
+        except Exception as e:
 
-                st.warning(
-                    f"Ошибка KPI: {e}"
-                )
-
-        # Executive Summary
+            st.warning(
+                f"Ошибка KPI: {e}"
+            )
 
         try:
 
             summary = (
-                build_executive_summary(
-                    dashboard
-                )
-   
+                build_executive_
