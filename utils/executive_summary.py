@@ -33,14 +33,12 @@ def build_executive_summary(
         )
 
         if analysis_id != "abc_xyz_matrix":
-
             continue
 
         if not result.get(
             "success",
             False
         ):
-
             continue
 
         data = result.get(
@@ -53,7 +51,6 @@ def build_executive_summary(
         )
 
         if summary_df is None:
-
             continue
 
         try:
@@ -94,7 +91,6 @@ def build_executive_summary(
             )
 
         except Exception:
-
             pass
 
     recommendations = dashboard.get(
