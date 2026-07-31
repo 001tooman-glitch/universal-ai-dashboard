@@ -1,6 +1,9 @@
 def build_dashboard_summary(
     dashboard
 ):
+    """
+    Простая текстовая сводка для дашборда.
+    """
 
     summary = []
 
@@ -14,22 +17,9 @@ def build_dashboard_summary(
         "Не определен"
     )
 
-    confidence = passport.get(
-        "confidence",
-        0
-    )
-
     summary.append(
-        f"Обнаружен домен: {domain}."
+        f"Домен данных: {domain}"
     )
-
-    summary.append(
-        f"Уверенность классификации: {round(confidence * 100, 1)}%."
-    )
-
-    # ====================================
-    # KPI
-    # ====================================
 
     source_df = dashboard.get(
         "source_df"
@@ -38,16 +28,12 @@ def build_dashboard_summary(
     if source_df is not None:
 
         summary.append(
-            f"Количество записей: {len(source_df):,}."
+            f"Количество записей: {len(source_df)}"
         )
 
         summary.append(
-            f"Количество полей: {len(source_df.columns)}."
+            f"Количество столбцов: {len(source_df.columns)}"
         )
-
-    # ====================================
-    # Анализы
-    # ====================================
 
     analyses = dashboard.get(
         "available_analyses",
@@ -56,28 +42,8 @@ def build_dashboard_summary(
 
     if analyses:
 
-        top_analyses = [
-
-            item.get("name")
-
-            for item in analyses[:5]
-        ]
-
         summary.append(
-            "Доступные анализы: "
-            + ", ".join(top_analyses)
-            + "."
+            f"Доступно анализов: {len(analyses)}"
         )
 
-    # ====================================
-    # Результаты
-    # ====================================
-
-    analysis_results = dashboard.get(
-        "analysis_results",
-        []
-    )
-
-    completed = [
-
-      
+    return summary
