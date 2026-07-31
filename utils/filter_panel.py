@@ -1,12 +1,9 @@
 import streamlit as st
 
 
-def find_column(
-    df,
-    keywords
-):
+def find_column(df, keywords):
     """
-    Поиск колонки по набору ключевых слов.
+    Поиск колонки по ключевым словам.
     """
 
     for column in df.columns:
@@ -27,8 +24,7 @@ def render_filter_panel(
     semantic_model=None
 ):
     """
-    Универсальная панель фильтров.
-    Работает даже если семантика не определена.
+    Простая универсальная панель фильтров.
     """
 
     filtered_df = df.copy()
@@ -45,7 +41,6 @@ def render_filter_panel(
         df,
         [
             "период",
-            "period",
             "date",
             "дата"
         ]
@@ -55,10 +50,9 @@ def render_filter_panel(
         df,
         [
             "материал",
-            "material",
-            "product",
+            "наименование",
             "номенклатура",
-            "наименование"
+            "product"
         ]
     )
 
@@ -66,9 +60,8 @@ def render_filter_panel(
         df,
         [
             "цех",
-            "подраздел",
+            "подразделение",
             "department",
-            "место хранения",
             "склад"
         ]
     )
@@ -77,22 +70,100 @@ def render_filter_panel(
     # ПЕРИОД
     # ====================================
 
-    if (
-        date_column is not None
-        and date_column in filtered_df.columns
-    ):
+    if date_column in filtered_df.columns:
 
         periods = sorted(
-            filtered_df[
-                date_column
-            ]
+            filtered_df[date_column]
             .dropna()
             .astype(str)
             .unique()
             .tolist()
         )
 
-        selected_periods = (
-            st.sidebar.multiselect(
-                "📅 Период",
-    
+        selected_periods = st.sidebar.multiselect(
+            "📅 Период",
+            periods
+        )
+
+        if selected_periods:
+
+            filtered_df = filtered_df[
+                filtered_df[date_column]
+                .astype(str)
+                .isin(selected_periods)
+            ]
+
+    # ====================================
+    # МАТЕРИАЛ
+    # ====================================
+
+    if product_column in filtered_df.columns:
+
+        products = sorted(
+            filtered_df[product_column]
+            .dropna()
+            .astype(str)
+            .unique()
+            .tolist()
+        )
+
+        selected_products = st.sidebar.multiselect(
+            "📦 Материал",
+            products
+        )
+
+        if selected_products:
+
+            filtered_df = filtered_df[
+                filtered_df[product_column]
+                .astype(str)
+                .isin(selected_products)
+            ]
+
+    # ====================================
+    # ПОДРАЗДЕЛЕНИЕ
+    # ====================================
+
+    if (
+        department_column is not None
+        and department_column in filtered_df.columns
+    ):
+
+        departments = sorted(
+            filtered_df[department_column]
+            .dropna()
+            .astype(str)
+            .unique()
+            .tolist()
+        )
+
+        selected_departments = st.sidebar.multiselect(
+            "🏭 Подразделение",
+            departments
+        )
+
+        if selected_departments:
+
+            filtered_df = filtered_df[
+                filtered_df[department_column]
+                .astype(str)
+                .isin(selected_departments)
+            ]
+
+    # ====================================
+    # СТАТИСТИКА
+    # ====================================
+
+    st.sidebar.markdown("---")
+
+    st.sidebar.metric(
+        "Записей",
+        len(filtered_df)
+    )
+
+    st.sidebar.metric(
+        "Столбцов",
+        len(filtered_df.columns)
+    )
+
+    return filtered_df
