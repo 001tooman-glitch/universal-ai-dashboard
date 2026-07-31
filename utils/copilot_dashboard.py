@@ -8,6 +8,10 @@ def build_copilot_dashboard(
     semantics,
     scenario
 ):
+    """
+    Формирует единый объект Dashboard,
+    который используется renderer-ом.
+    """
 
     result = run_copilot_analysis(
         df=df,
@@ -18,10 +22,15 @@ def build_copilot_dashboard(
     dashboard = {
 
         # ====================================
-        # Исходный DataFrame
+        # Исходные данные
         # ====================================
 
         "source_df": df,
+
+        "semantic_model": result.get(
+            "semantic_model",
+            {}
+        ),
 
         # ====================================
         # Паспорт данных
@@ -29,22 +38,103 @@ def build_copilot_dashboard(
 
         "data_passport": {
 
-            "domain":
-                result["domain_result"].get(
-                    "domain"
-                ),
+            "domain": (
+                result.get(
+                    "domain_result",
+                    {}
+                ).get(
+                    "domain",
+                    "Не определен"
+                )
+            ),
 
-            "confidence":
-                result["domain_result"].get(
-                    "confidence"
-                ),
+            "confidence": (
+                result.get(
+                    "domain_result",
+                    {}
+                ).get(
+                    "confidence",
+                    0
+                )
+            ),
 
-            "dimensions":
-                len(
-                    result["semantic_model"].get(
-                        "dimensions",
-                        []
-                    )
-                ),
+            "dimensions": len(
+                result.get(
+                    "semantic_model",
+                    {}
+                ).get(
+                    "dimensions",
+                    []
+                )
+            ),
 
-         
+            "measures": len(
+                result.get(
+                    "semantic_model",
+                    {}
+                ).get(
+                    "measures",
+                    []
+                )
+            )
+        },
+
+        # ====================================
+        # Объяснение домена
+        # ====================================
+
+        "domain_explanations": (
+            result.get(
+                "domain_result",
+                {}
+            ).get(
+                "reasons",
+                []
+            )
+        ),
+
+        # ====================================
+        # Инсайты модели данных
+        # ====================================
+
+        "model_insights": result.get(
+            "model_insights",
+            []
+        ),
+
+        # ====================================
+        # Аналитика
+        # ====================================
+
+        "available_analyses": result.get(
+            "available_analyses",
+            []
+        ),
+
+        "analysis_plan": result.get(
+            "analysis_plan",
+            []
+        ),
+
+        "analysis_results": result.get(
+            "analysis_results",
+            []
+        ),
+
+        # ====================================
+        # Рекомендации
+        # ====================================
+
+        "recommendations": result.get(
+            "recommendations",
+            []
+        ),
+
+        # ====================================
+        # Дополнительные данные
+        # ====================================
+
+        "scenario": scenario
+    }
+
+    return dashboard
