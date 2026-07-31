@@ -2,9 +2,7 @@ def build_executive_summary(
     dashboard
 ):
     """
-    Формирует краткую управленческую сводку
-    для руководителя на основании
-    результатов анализа.
+    Краткая управленческая сводка.
     """
 
     summary = []
@@ -16,16 +14,12 @@ def build_executive_summary(
 
     domain = passport.get(
         "domain",
-        "Не определен"
+        "Не определён"
     )
 
     summary.append(
         f"Обнаружен домен: {domain}."
     )
-
-    # ====================================
-    # ABC/XYZ Matrix
-    # ====================================
 
     analysis_results = dashboard.get(
         "analysis_results",
@@ -64,7 +58,7 @@ def build_executive_summary(
 
         try:
 
-            summary_map = {}
+            groups = {}
 
             for _, row in summary_df.iterrows():
 
@@ -76,47 +70,32 @@ def build_executive_summary(
                     row.iloc[1]
                 )
 
-                summary_map[
-                    group
-                ] = count
+                groups[group] = count
 
-            if "AX" in summary_map:
+            if "AX" in groups:
 
                 summary.append(
-                    f"Группа AX содержит "
-                    f"{summary_map['AX']} "
-                    f"приоритетных позиций "
-                    f"для контроля."
+                    f"Группа AX содержит {groups['AX']} критичных позиций."
                 )
 
-            if "CZ" in summary_map:
+            if "CZ" in groups:
 
                 summary.append(
-                    f"Группа CZ содержит "
-                    f"{summary_map['CZ']} "
-                    f"кандидатов на "
-                    f"оптимизацию запасов."
+                    f"Группа CZ содержит {groups['CZ']} кандидатов на оптимизацию запасов."
                 )
 
             largest_group = max(
-                summary_map,
-                key=summary_map.get
+                groups,
+                key=groups.get
             )
 
             summary.append(
-                f"Наибольшая группа: "
-                f"{largest_group} "
-                f"({summary_map[largest_group]} "
-                f"позиций)."
+                f"Наибольшая группа: {largest_group} ({groups[largest_group]} позиций)."
             )
 
         except Exception:
 
             pass
-
-    # ====================================
-    # Рекомендации Copilot
-    # ====================================
 
     recommendations = dashboard.get(
         "recommendations",
@@ -127,31 +106,9 @@ def build_executive_summary(
 
         if item not in summary:
 
-            summary.append(item)
-
-    # ====================================
-    # Инсайты модели
-    # ====================================
-
-    insights = dashboard.get(
-        "model_insights",
-        []
-    )
-
-    for item in insights:
-
-        if (
-            "анализ" in item.lower()
-            or "тренд" in item.lower()
-        ):
-
             summary.append(
                 item
             )
-
-    # ====================================
-    # Удаление дублей
-    # ====================================
 
     summary = list(
         dict.fromkeys(
