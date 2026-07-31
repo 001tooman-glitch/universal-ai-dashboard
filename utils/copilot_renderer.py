@@ -18,6 +18,7 @@ from utils.chart_factory import (
 def render_copilot_dashboard(dashboard):
 
     source_df = dashboard.get("source_df")
+
     semantic_model = dashboard.get(
         "semantic_model",
         {}
@@ -51,11 +52,15 @@ def render_copilot_dashboard(dashboard):
                     semantic_model
                 )
 
-                render_priority_kpis(kpis)
+                render_priority_kpis(
+                    kpis
+                )
 
         except Exception as e:
 
-            st.warning(f"KPI: {e}")
+            st.warning(
+                f"KPI: {e}"
+            )
 
         try:
 
@@ -71,7 +76,9 @@ def render_copilot_dashboard(dashboard):
 
                 for item in summary:
 
-                    st.success(item)
+                    st.success(
+                        item
+                    )
 
         except Exception as e:
 
@@ -120,4 +127,47 @@ def render_copilot_dashboard(dashboard):
 
                 if (
                     "product" in entities
-    
+                    and "amount" in entities
+                ):
+                                        product_col = (
+                        entities["product"][0]
+                    )
+
+                    amount_col = (
+                        entities["amount"][0]
+                    )
+
+                    fig = (
+                        build_top_materials_chart(
+                            top_df,
+                            product_col,
+                            amount_col
+                        )
+                    )
+
+                    st.subheader(
+                        "🔥 ТОП-20 материалов"
+                    )
+
+                    st.plotly_chart(
+                        fig,
+                        use_container_width=True
+                    )
+
+    # ==================================
+    # ЗАПАСЫ
+    # ==================================
+
+       with tab3:
+
+        st.subheader(
+            "⚙ Диагностика"
+        )
+
+        passport = dashboard.get(
+            "data_passport",
+            {}
+        )
+
+        st.json(passport)
+        
