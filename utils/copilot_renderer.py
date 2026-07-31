@@ -88,5 +88,44 @@ def render_copilot_dashboard(
 
         try:
 
-            summary = (
-                build_executive_
+            summary = build_executive_summary(
+                dashboard
+            )
+
+            if summary:
+
+                st.subheader(
+                    "🤖 Executive Summary"
+                )
+
+                for item in summary:
+
+                    st.success(
+                        item
+                    )
+
+        except Exception as e:
+
+            st.warning(
+                f"Ошибка Executive Summary: {e}"
+            )
+
+        try:
+
+            if (
+                source_df is not None
+                and semantic_model
+            ):
+
+                fig = build_trend_chart(
+                    source_df,
+                    semantic_model
+                )
+
+                if fig is not None:
+
+                    st.subheader(
+                        "📈 Динамика стоимости"
+                    )
+
+                    st.plotly_
