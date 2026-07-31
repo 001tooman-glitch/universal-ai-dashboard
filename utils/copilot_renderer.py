@@ -45,229 +45,151 @@ def render_copilot_dashboard(
         {}
     )
 
-    # ====================================
-    # KPI
-    # ====================================
-
-    if (
-        source_df is not None
-        and semantic_model
-    ):
-
-        try:
-
-            kpis = build_dashboard_kpis(
-                source_df,
-                semantic_model
-            )
-
-            render_priority_kpis(
-                kpis
-            )
-
-        except Exception as e:
-
-            st.warning(
-                f"Ошибка KPI: {e}"
-            )
-
-    # ====================================
-    # EXECUTIVE SUMMARY
-    # ====================================
-
-    try:
-
-        summary = build_executive_summary(
-            dashboard
-        )
-
-        if summary:
-
-            st.subheader(
-                "🤖 Executive Summary"
-            )
-
-            for item in summary:
-
-                st.success(item)
-
-    except Exception as e:
-
-        st.warning(
-            f"Ошибка Executive Summary: {e}"
-        )
-
-    # ====================================
-    # ДИНАМИКА
-    # ====================================
-
-    try:
-
-        if (
-            source_df is not None
-            and semantic_model
-        ):
-
-            fig = build_trend_chart(
-                source_df,
-                semantic_model
-            )
-
-            if fig is not None:
-
-                st.subheader(
-                    "📈 Динамика стоимости"
-                )
-
-                st.plotly_chart(
-                    fig,
-                    use_container_width=True
-                )
-
-    except Exception as e:
-
-        st.warning(
-            f"Ошибка графика динамики: {e}"
-        )
-
-    # ====================================
-    # ТОП МАТЕРИАЛОВ
-    # ====================================
-
-    try:
-
-        if (
-            source_df is not None
-            and semantic_model
-        ):
-
-            top_df = build_top_materials(
-                source_df,
-                semantic_model,
-                top_n=20
-            )
-
-            if top_df is not None:
-
-                entities = semantic_model.get(
-                    "entities",
-                    {}
-                )
-
-                product_column = (
-                    entities["product"][0]
-                )
-
-                amount_column = (
-                    entities["amount"][0]
-                )
-
-                fig = (
-                    build_top_materials_chart(
-                        top_df,
-                        product_column,
-                        amount_column
-                    )
-                )
-
-                st.subheader(
-                    "🔥 ТОП-20 материалов"
-                )
-
-                st.plotly_chart(
-                    fig,
-                    use_container_width=True
-                )
-
-                with st.expander(
-                    "Детализация ТОП-20"
-                ):
-
-                    st.dataframe(
-                        top_df,
-                        use_container_width=True
-                    )
-
-    except Exception as e:
-
-        st.warning(
-            f"Ошибка ТОП материалов: {e}"
-        )
-
-    # ====================================
-    # АНАЛИТИКА
-    # ====================================
-
-    st.subheader(
-        "📊 Аналитика"
-    )
-
     results = dashboard.get(
         "analysis_results",
         []
     )
 
-    if not results:
+    tab1, tab2, tab3 = st.tabs(
+        [
+            "📊 Обзор",
+            "📦 Запасы",
+            "⚙ Диагностика"
+        ]
+    )
 
-        st.info(
-            "Нет результатов анализа."
-        )
+    # ====================================
+    # ОБЗОР
+    # ====================================
 
-    else:
+    with tab1:
 
-        for result in results:
+        # KPI
 
-            analysis_id = result.get(
-                "analysis_id",
-                "unknown"
-            )
+        if (
+            source_df is not None
+            and semantic_model
+        ):
 
-            success = result.get(
-                "success",
-                False
-            )
+            try:
 
-            data = result.get(
-                "data"
-            )
-
-            if not success:
-
-                continue
-
-            # ==========================
-            # ABC XYZ
-            # ==========================
-
-            if (
-                analysis_id
-                == "abc_xyz_matrix"
-                and isinstance(
-                    data,
-                    dict
+                kpis = build_dashboard_kpis(
+                    source_df,
+                    semantic_model
                 )
-            ):
+
+                render_priority_kpis(
+                    kpis
+                )
+
+            except Exception as e:
+
+                st.warning(
+                    f"Ошибка KPI: {e}"
+                )
+
+        # Executive Summary
+
+        try:
+
+            summary = (
+                build_executive_summary(
+                    dashboard
+                )
+            )
+
+            if summary:
 
                 st.subheader(
-                    "🧩 Матрица ABC/XYZ"
+                    "🤖 Executive Summary"
                 )
 
-                matrix = data.get(
-                    "matrix"
+                for item in summary:
+
+                    st.success(item)
+
+        except Exception as e:
+
+            st.warning(
+                f"Ошибка Executive Summary: {e}"
+            )
+
+        # Динамика
+
+        try:
+
+            if (
+                source_df is not None
+                and semantic_model
+            ):
+
+                fig = build_trend_chart(
+                    source_df,
+                    semantic_model
                 )
 
-                summary_df = data.get(
-                    "summary"
+                if fig is not None:
+
+                    st.subheader(
+                        "📈 Динамика стоимости"
+                    )
+
+                    st.plotly_chart(
+                        fig,
+                        use_container_width=True
+                    )
+
+        except Exception as e:
+
+            st.warning(
+                f"Ошибка графика динамики: {e}"
+            )
+
+        # ТОП материалов
+
+        try:
+
+            if (
+                source_df is not None
+                and semantic_model
+            ):
+
+                top_df = build_top_materials(
+                    source_df,
+                    semantic_model,
+                    top_n=20
                 )
 
-                if matrix is not None:
+                if top_df is not None:
 
-                    try:
+                    entities = semantic_model.get(
+                        "entities",
+                        {}
+                    )
+
+                    if (
+                        "product" in entities
+                        and "amount" in entities
+                    ):
+
+                        product_column = (
+                            entities["product"][0]
+                        )
+
+                        amount_column = (
+                            entities["amount"][0]
+                        )
 
                         fig = (
-                            build_abc_xyz_heatmap(
-                                matrix
+                            build_top_materials_chart(
+                                top_df,
+                                product_column,
+                                amount_column
                             )
+                        )
+
+                        st.subheader(
+                            "🔥 ТОП-20 материалов"
                         )
 
                         st.plotly_chart(
@@ -275,254 +197,26 @@ def render_copilot_dashboard(
                             use_container_width=True
                         )
 
-                    except Exception as e:
+                        with st.expander(
+                            "Детализация ТОП-20"
+                        ):
 
-                        st.warning(
-                            f"Ошибка Heatmap: {e}"
-                        )
+                            st.dataframe(
+                                top_df,
+                                use_container_width=True
+                            )
 
-                if summary_df is not None:
+        except Exception as e:
 
-                    with st.expander(
-                        "Сводка ABC/XYZ"
-                    ):
-
-                        st.dataframe(
-                            summary_df,
-                            use_container_width=True
-                        )
-
-            # ==========================
-            # ABC
-            # ==========================
-
-            elif (
-                analysis_id
-                == "abc_analysis"
-                and isinstance(
-                    data,
-                    pd.DataFrame
-                )
-            ):
-
-                st.subheader(
-                    "📦 ABC-анализ"
-                )
-
-                try:
-
-                    fig = build_abc_chart(
-                        data
-                    )
-
-                    st.plotly_chart(
-                        fig,
-                        use_container_width=True
-                    )
-
-                except Exception as e:
-
-                    st.warning(
-                        f"Ошибка ABC: {e}"
-                    )
-
-                with st.expander(
-                    "Детализация ABC"
-                ):
-
-                    st.dataframe(
-                        data.head(100),
-                        use_container_width=True
-                    )
-
-            # ==========================
-            # XYZ
-            # ==========================
-
-            elif (
-                analysis_id
-                == "xyz_analysis"
-                and isinstance(
-                    data,
-                    pd.DataFrame
-                )
-            ):
-
-                st.subheader(
-                    "📦 XYZ-анализ"
-                )
-
-                try:
-
-                    fig = build_xyz_chart(
-                        data
-                    )
-
-                    st.plotly_chart(
-                        fig,
-                        use_container_width=True
-                    )
-
-                except Exception as e:
-
-                    st.warning(
-                        f"Ошибка XYZ: {e}"
-                    )
-
-                with st.expander(
-                    "Детализация XYZ"
-                ):
-
-                    st.dataframe(
-                        data.head(100),
-                        use_container_width=True
-                    )
-
-            # ==========================
-            # INVENTORY
-            # ==========================
-
-            elif (
-                analysis_id
-                == "inventory_analysis"
-                and isinstance(
-                    data,
-                    dict
-                )
-            ):
-
-                insights = data.get(
-                    "insights",
-                    []
-                )
-
-                if insights:
-
-                    st.subheader(
-                        "📋 Инсайты по запасам"
-                    )
-
-                    for insight in insights:
-
-                        st.info(
-                            insight
-                        )
+            st.warning(
+                f"Ошибка ТОП материалов: {e}"
+            )
 
     # ====================================
-    # ДИАГНОСТИКА
+    # ЗАПАСЫ
     # ====================================
 
-    st.subheader(
-        "⚙ Диагностика"
-    )
+    with tab2:
 
-    passport = dashboard.get(
-        "data_passport",
-        {}
-    )
-
-    with st.expander(
-        "AI Паспорт"
-    ):
-
-        c1, c2, c3, c4 = st.columns(4)
-
-        c1.metric(
-            "Домен",
-            passport.get(
-                "domain",
-                "-"
-            )
-        )
-
-        c2.metric(
-            "Уверенность",
-            f"{round(passport.get('confidence', 0) * 100, 1)}%"
-        )
-
-        c3.metric(
-            "Измерений",
-            passport.get(
-                "dimensions",
-                0
-            )
-        )
-
-        c4.metric(
-            "Показателей",
-            passport.get(
-                "measures",
-                0
-            )
-        )
-
-    with st.expander(
-        "Объяснение домена"
-    ):
-
-        for item in dashboard.get(
-            "domain_explanations",
-            []
-        ):
-
-            st.write(item)
-
-    with st.expander(
-        "Инсайты модели данных"
-    ):
-
-        for item in dashboard.get(
-            "model_insights",
-            []
-        ):
-
-            st.write(item)
-
-    with st.expander(
-        "Доступные анализы"
-    ):
-
-        analyses = dashboard.get(
-            "available_analyses",
-            []
-        )
-
-        if analyses:
-
-            st.dataframe(
-                pd.DataFrame(
-                    analyses
-                ),
-                use_container_width=True
-            )
-
-    with st.expander(
-        "План анализа"
-    ):
-
-        plan = dashboard.get(
-            "analysis_plan",
-            []
-        )
-
-        if plan:
-
-            st.dataframe(
-                pd.DataFrame(
-                    plan
-                ),
-                use_container_width=True
-            )
-
-    with st.expander(
-        "Рекомендации Copilot"
-    ):
-
-        recommendations = dashboard.get(
-            "recommendations",
-            []
-        )
-
-        for item in recommendations:
-
-            st.write(item)
+        st.subheader(
+            "📦 Аналитика запасов
