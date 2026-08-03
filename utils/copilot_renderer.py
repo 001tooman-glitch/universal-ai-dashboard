@@ -124,7 +124,7 @@ def render_copilot_dashboard(dashboard):
                     "🔥 ТОП-20 материалов"
                 )
 
-                      st.dataframe(
+                st.dataframe(
                     top_df,
                     use_container_width=True
                 )
@@ -164,11 +164,15 @@ def render_copilot_dashboard(dashboard):
                 )
 
                 if not success:
+
                     continue
 
                 if (
                     analysis_id == "abc_xyz_matrix"
-                    and isinstance(data, dict)
+                    and isinstance(
+                        data,
+                        dict
+                    )
                 ):
 
                     st.subheader(
@@ -181,8 +185,10 @@ def render_copilot_dashboard(dashboard):
 
                     if matrix is not None:
 
-                        fig = build_abc_xyz_heatmap(
-                            matrix
+                        fig = (
+                            build_abc_xyz_heatmap(
+                                matrix
+                            )
                         )
 
                         st.plotly_chart(
@@ -225,6 +231,15 @@ def render_copilot_dashboard(dashboard):
                         fig,
                         use_container_width=True
                     )
+
+                    with st.expander(
+                        "Детализация ABC"
+                    ):
+
+                        st.dataframe(
+                            data.head(100),
+                            use_container_width=True
+                        )
 
         except Exception as e:
 
