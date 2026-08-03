@@ -6,7 +6,10 @@ from utils.dashboard_kpi_renderer import render_priority_kpis
 from utils.executive_summary import build_executive_summary
 from utils.trend_dashboard import build_trend_chart
 from utils.top_materials import build_top_materials
-from utils.top_materials_chart import build_top_materials_chart
+
+from utils.chart_factory import (
+    build_abc_xyz_heatmap
+)
 
 
 def render_copilot_dashboard(dashboard):
@@ -18,6 +21,11 @@ def render_copilot_dashboard(dashboard):
     semantic_model = dashboard.get(
         "semantic_model",
         {}
+    )
+
+    results = dashboard.get(
+        "analysis_results",
+        []
     )
 
     tab1, tab2, tab3 = st.tabs(
@@ -136,9 +144,79 @@ def render_copilot_dashboard(dashboard):
             "📦 Аналитика запасов"
         )
 
-        st.info(
-            "Раздел будет восстановлен после запуска приложения."
-        )
+        try:
+
+            for result in results:
+
+                analysis_id = result.get(
+                    "analysis_id",
+                    ""
+                )
+
+                success = result.get(
+                    "success",
+                    False
+                )
+
+                data = result.get(
+                    "data"
+                )
+
+                if not success:
+
+                    continue
+
+                if (
+                    analysis_id == "abc_xyz_matrix"
+                    and isinstance(
+                        data,
+                        dict
+                    )
+                ):
+
+                    st.subheader(
+                        "🧩 Матрица ABC/XYZ"
+                    )
+
+                    matrix = data.get(
+                        "matrix"
+                    )
+
+                    if matrix is not None:
+
+                        fig = (
+                            build_abc_xyz_heatmap(
+                                matrix
+                            )
+                        )
+
+                        st.plotly_chart(
+                            fig,
+                            use_container_width=True
+                        )
+
+                    summary_df = data.get(
+                        "summary"
+                    )
+
+                    if summary_df is not None:
+
+                        with st.expander(
+                            "Сводка ABC/XYZ"
+                        ):
+
+                            st.dataframe(
+                                summary_df,
+                                use_container_width=True
+                            )
+
+                    break
+
+        except Exception as e:
+
+            st.warning(
+                f"ABC/XYZ: {e}"
+            )
 
     # ====================================
     # ДИАГНОСТИКА
