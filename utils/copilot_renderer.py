@@ -8,25 +8,16 @@ from utils.trend_dashboard import build_trend_chart
 from utils.top_materials import build_top_materials
 from utils.top_materials_chart import build_top_materials_chart
 
-from utils.chart_factory import (
-    build_abc_chart,
-    build_xyz_chart,
-    build_abc_xyz_heatmap
-)
-
 
 def render_copilot_dashboard(dashboard):
 
-    source_df = dashboard.get("source_df")
+    source_df = dashboard.get(
+        "source_df"
+    )
 
     semantic_model = dashboard.get(
         "semantic_model",
         {}
-    )
-
-    results = dashboard.get(
-        "analysis_results",
-        []
     )
 
     tab1, tab2, tab3 = st.tabs(
@@ -37,9 +28,9 @@ def render_copilot_dashboard(dashboard):
         ]
     )
 
-    # ==================================
+    # ====================================
     # ОБЗОР
-    # ==================================
+    # ====================================
 
     with tab1:
 
@@ -120,45 +111,40 @@ def render_copilot_dashboard(dashboard):
 
             if top_df is not None:
 
-                entities = semantic_model.get(
-                    "entities",
-                    {}
+                st.subheader(
+                    "🔥 ТОП-20 материалов"
                 )
 
-                if (
-                    "product" in entities
-                    and "amount" in entities
-                ):
-                                        product_col = (
-                        entities["product"][0]
-                    )
+                st.dataframe(
+                    top_df,
+                    use_container_width=True
+                )
 
-                    amount_col = (
-                        entities["amount"][0]
-                    )
+        except Exception as e:
 
-                    fig = (
-                        build_top_materials_chart(
-                            top_df,
-                            product_col,
-                            amount_col
-                        )
-                    )
+            st.warning(
+                f"Top20: {e}"
+            )
 
-                    st.subheader(
-                        "🔥 ТОП-20 материалов"
-                    )
-
-                    st.plotly_chart(
-                        fig,
-                        use_container_width=True
-                    )
-
-    # ==================================
+    # ====================================
     # ЗАПАСЫ
-    # ==================================
+    # ====================================
 
-       with tab3:
+    with tab2:
+
+        st.subheader(
+            "📦 Аналитика запасов"
+        )
+
+        st.info(
+            "Раздел будет восстановлен после запуска приложения."
+        )
+
+    # ====================================
+    # ДИАГНОСТИКА
+    # ====================================
+
+    with tab3:
 
         st.subheader(
             "⚙ Диагностика"
@@ -169,5 +155,6 @@ def render_copilot_dashboard(dashboard):
             {}
         )
 
-        st.json(passport)
-        
+        st.json(
+            passport
+        )
