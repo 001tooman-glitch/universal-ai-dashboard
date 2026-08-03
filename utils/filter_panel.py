@@ -48,8 +48,7 @@ def render_filter_panel(
             "product"
         ]
     )
-
-    # ==========================
+        # ==========================
     # ПЕРИОД
     # ==========================
 
@@ -75,7 +74,8 @@ def render_filter_panel(
                 placeholder="Выберите период"
             )
         )
-                if selected_periods:
+
+        if selected_periods:
 
             filtered_df = filtered_df[
                 filtered_df[
@@ -86,8 +86,7 @@ def render_filter_panel(
                     selected_periods
                 )
             ]
-
-    # ==========================
+                # ==========================
     # МАТЕРИАЛ
     # ==========================
 
@@ -125,7 +124,7 @@ def render_filter_panel(
                     selected_products
                 )
             ]
-            
+
     st.sidebar.markdown(
         "---"
     )
