@@ -124,4 +124,129 @@ def render_copilot_dashboard(dashboard):
                     "🔥 ТОП-20 материалов"
                 )
 
-      
+                      st.dataframe(
+                    top_df,
+                    use_container_width=True
+                )
+
+        except Exception as e:
+
+            st.warning(
+                f"Top20: {e}"
+            )
+
+    # ====================================
+    # ЗАПАСЫ
+    # ====================================
+
+    with tab2:
+
+        st.subheader(
+            "📦 Аналитика запасов"
+        )
+
+        try:
+
+            for result in results:
+
+                analysis_id = result.get(
+                    "analysis_id",
+                    ""
+                )
+
+                success = result.get(
+                    "success",
+                    False
+                )
+
+                data = result.get(
+                    "data"
+                )
+
+                if not success:
+                    continue
+
+                if (
+                    analysis_id == "abc_xyz_matrix"
+                    and isinstance(data, dict)
+                ):
+
+                    st.subheader(
+                        "🧩 Матрица ABC/XYZ"
+                    )
+
+                    matrix = data.get(
+                        "matrix"
+                    )
+
+                    if matrix is not None:
+
+                        fig = build_abc_xyz_heatmap(
+                            matrix
+                        )
+
+                        st.plotly_chart(
+                            fig,
+                            use_container_width=True
+                        )
+
+                    summary_df = data.get(
+                        "summary"
+                    )
+
+                    if summary_df is not None:
+
+                        with st.expander(
+                            "Сводка ABC/XYZ"
+                        ):
+
+                            st.dataframe(
+                                summary_df,
+                                use_container_width=True
+                            )
+
+                elif (
+                    analysis_id == "abc_analysis"
+                    and isinstance(
+                        data,
+                        pd.DataFrame
+                    )
+                ):
+
+                    st.subheader(
+                        "📦 ABC-анализ"
+                    )
+
+                    fig = build_abc_chart(
+                        data
+                    )
+
+                    st.plotly_chart(
+                        fig,
+                        use_container_width=True
+                    )
+
+        except Exception as e:
+
+            st.warning(
+                f"ABC: {e}"
+            )
+
+    # ====================================
+    # ДИАГНОСТИКА
+    # ====================================
+
+    with tab3:
+
+        st.subheader(
+            "⚙ Диагностика"
+        )
+
+        passport = dashboard.get(
+            "data_passport",
+            {}
+        )
+
+        st.json(
+            passport
+        )
