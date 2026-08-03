@@ -1,7 +1,10 @@
 import streamlit as st
 
 
-def find_column(df, keywords):
+def find_column(
+    df,
+    keywords
+):
 
     for column in df.columns:
 
@@ -56,7 +59,9 @@ def render_filter_panel(
     ):
 
         periods = sorted(
-            filtered_df[date_column]
+            filtered_df[
+                date_column
+            ]
             .dropna()
             .astype(str)
             .unique()
@@ -70,15 +75,57 @@ def render_filter_panel(
                 placeholder="Выберите период"
             )
         )
-
-        if selected_periods:
+                if selected_periods:
 
             filtered_df = filtered_df[
-                            filtered_df[product_column]
-            .astype(str)
-            .isin(selected_products)
-        ]
+                filtered_df[
+                    date_column
+                ]
+                .astype(str)
+                .isin(
+                    selected_periods
+                )
+            ]
 
+    # ==========================
+    # МАТЕРИАЛ
+    # ==========================
+
+    if (
+        product_column is not None
+        and product_column in filtered_df.columns
+    ):
+
+        products = sorted(
+            filtered_df[
+                product_column
+            ]
+            .dropna()
+            .astype(str)
+            .unique()
+            .tolist()
+        )
+
+        selected_products = (
+            st.sidebar.multiselect(
+                "📦 Материал",
+                products,
+                placeholder="Выберите материал"
+            )
+        )
+
+        if selected_products:
+
+            filtered_df = filtered_df[
+                filtered_df[
+                    product_column
+                ]
+                .astype(str)
+                .isin(
+                    selected_products
+                )
+            ]
+            
     st.sidebar.markdown(
         "---"
     )
