@@ -48,6 +48,26 @@ def render_filter_panel(
             "product"
         ]
     )
+
+    shop_column = find_column(
+        df,
+        [
+            "цех",
+            "shop",
+            "наименование цеха",
+            "цех наименование"
+        ]
+    )
+
+    pfm_column = find_column(
+        df,
+        [
+            "пфм",
+            "pfm",
+            "код пфм",
+            "номер пфм"
+        ]
+    )
         # ==========================
     # ПЕРИОД
     # ==========================
@@ -86,7 +106,8 @@ def render_filter_panel(
                     selected_periods
                 )
             ]
-                # ==========================
+
+    # ==========================
     # МАТЕРИАЛ
     # ==========================
 
@@ -122,6 +143,83 @@ def render_filter_panel(
                 .astype(str)
                 .isin(
                     selected_products
+                )
+            ]
+                # ==========================
+    # ЦЕХ
+    # ==========================
+
+    if (
+        shop_column is not None
+        and shop_column in filtered_df.columns
+    ):
+
+        shops = sorted(
+            filtered_df[
+                shop_column
+            ]
+            .dropna()
+            .astype(str)
+            .unique()
+            .tolist()
+        )
+
+        selected_shops = (
+            st.sidebar.multiselect(
+                "🏭 Цех",
+                shops,
+                placeholder="Выберите цех"
+            )
+        )
+
+        if selected_shops:
+
+            filtered_df = filtered_df[
+                filtered_df[
+                    shop_column
+                ]
+                .astype(str)
+                .isin(
+                    selected_shops
+                )
+            ]
+
+    # ==========================
+    # ПФМ
+    # ==========================
+
+    if (
+        pfm_column is not None
+        and pfm_column in filtered_df.columns
+    ):
+
+        pfms = sorted(
+                        filtered_df[
+                pfm_column
+            ]
+            .dropna()
+            .astype(str)
+            .unique()
+            .tolist()
+        )
+
+        selected_pfms = (
+            st.sidebar.multiselect(
+                "🏷 ПФМ",
+                pfms,
+                placeholder="Выберите ПФМ"
+            )
+        )
+
+        if selected_pfms:
+
+            filtered_df = filtered_df[
+                filtered_df[
+                    pfm_column
+                ]
+                .astype(str)
+                .isin(
+                    selected_pfms
                 )
             ]
 
