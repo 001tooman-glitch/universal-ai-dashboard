@@ -74,37 +74,23 @@ def render_filter_panel(
         if selected_periods:
 
             filtered_df = filtered_df[
-                filtered_df[date_column]
-                .astype(str)
-                .isin(selected_periods)
-            ]
-
-    # ==========================
-    # МАТЕРИАЛ
-    # ==========================
-
-    if (
-        product_column is not None
-        and product_column in filtered_df.columns
-    ):
-
-        products = sorted(
-            filtered_df[product_column]
-            .dropna()
+                            filtered_df[product_column]
             .astype(str)
-            .unique()
-            .tolist()
-        )
+            .isin(selected_products)
+        ]
 
-        selected_products = (
-            st.sidebar.multiselect(
-                "📦 Материал",
-                products,
-                placeholder="Выберите материал"
-            )
-        )
+    st.sidebar.markdown(
+        "---"
+    )
 
-        if selected_products:
+    st.sidebar.metric(
+        "Записей",
+        len(filtered_df)
+    )
 
-            filtered_df = filtered_df[
-        
+    st.sidebar.metric(
+        "Столбцов",
+        len(filtered_df.columns)
+    )
+
+    return filtered_df
