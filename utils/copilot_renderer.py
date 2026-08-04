@@ -9,6 +9,7 @@ from utils.top_materials import build_top_materials
 
 from utils.chart_factory import (
     build_abc_chart,
+    build_xyz_chart,
     build_abc_xyz_heatmap
 )
 
@@ -76,17 +77,14 @@ def render_copilot_dashboard(dashboard):
 
                 for item in summary:
 
-                    st.success(
-                        item
-                    )
+                    st.success(item)
 
         except Exception as e:
 
             st.warning(
                 f"Summary: {e}"
             )
-
-        try:
+                    try:
 
             fig = build_trend_chart(
                 source_df,
@@ -146,8 +144,7 @@ def render_copilot_dashboard(dashboard):
         )
 
         try:
-
-            for result in results:
+                        for result in results:
 
                 analysis_id = result.get(
                     "analysis_id",
@@ -185,10 +182,8 @@ def render_copilot_dashboard(dashboard):
 
                     if matrix is not None:
 
-                        fig = (
-                            build_abc_xyz_heatmap(
-                                matrix
-                            )
+                        fig = build_abc_xyz_heatmap(
+                            matrix
                         )
 
                         st.plotly_chart(
@@ -241,10 +236,40 @@ def render_copilot_dashboard(dashboard):
                             use_container_width=True
                         )
 
+                elif (
+                    analysis_id == "xyz_analysis"
+                    and isinstance(
+                        data,
+                        pd.DataFrame
+                    )
+                ):
+
+                    st.subheader(
+                        "📦 XYZ-анализ"
+                    )
+
+                    fig = build_xyz_chart(
+                        data
+                    )
+
+                    st.plotly_chart(
+                        fig,
+                        use_container_width=True
+                    )
+
+                    with st.expander(
+                        "Детализация XYZ"
+                    ):
+
+                        st.dataframe(
+                            data.head(100),
+                            use_container_width=True
+                        )
+
         except Exception as e:
 
             st.warning(
-                f"ABC: {e}"
+                f"Запасы: {e}"
             )
 
     # ====================================
