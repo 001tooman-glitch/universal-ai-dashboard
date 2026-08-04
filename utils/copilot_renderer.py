@@ -77,7 +77,9 @@ def render_copilot_dashboard(dashboard):
 
                 for item in summary:
 
-                    st.success(item)
+                    st.success(
+                        item
+                    )
 
         except Exception as e:
 
