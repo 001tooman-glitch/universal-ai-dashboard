@@ -86,7 +86,7 @@ def render_copilot_dashboard(dashboard):
             st.warning(
                 f"Summary: {e}"
             )
-                    try:
+      try:
 
             fig = build_trend_chart(
                 source_df,
@@ -146,7 +146,7 @@ def render_copilot_dashboard(dashboard):
         )
 
         try:
-                        for result in results:
+                for result in results:
 
                 analysis_id = result.get(
                     "analysis_id",
