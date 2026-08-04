@@ -69,7 +69,7 @@ def render_copilot_dashboard(dashboard):
                 dashboard
             )
 
-            if summary:
+                       if summary:
 
                 st.subheader(
                     "🤖 Executive Summary"
