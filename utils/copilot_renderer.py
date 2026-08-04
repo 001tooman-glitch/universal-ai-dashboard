@@ -86,7 +86,7 @@ def render_copilot_dashboard(dashboard):
             st.warning(
                 f"Summary: {e}"
             )
-                    try:
+        try:
 
             fig = build_trend_chart(
                 source_df,
